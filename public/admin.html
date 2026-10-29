@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="es-MX">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Panel · Radio de León</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* Panel de Radio de León — mismo sistema de color que la página,
+   tratamiento utilitario: listas claras y formularios grandes
+   para usarse cómodo desde el celular. */
+:root{
+  --bg:#16110f; --surface:#211915; --surface-2:#2c221d; --ink:#f4e9e2; --muted:#b9a59a; --line:#3b2e27;
+  --cantera:#e39a86; --cantera-deep:#c4705b; --suela:#c98a45; --ok:#5fb87a; --danger:#ff6a5c; --on-accent:#1a100c;
+  --font-display:"Big Shoulders Display","Arial Narrow",Impact,sans-serif;
+  --font-ui:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --font-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme: light){
+  :root{--bg:#f6efea;--surface:#fffaf7;--surface-2:#f0e4dc;--ink:#24180f;--muted:#6f5a4d;--line:#e2d2c7;
+    --cantera:#b8563f;--cantera-deep:#93402c;--suela:#9a6024;--ok:#2f7d48;--danger:#c0352a;--on-accent:#fff;color-scheme:light}
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-ui);font-size:16px;line-height:1.5}
+button,input,textarea,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--cantera);outline-offset:2px;border-radius:6px}
+a{color:var(--cantera)}
+.wrap{max-width:980px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2{font-family:var(--font-display);text-transform:uppercase;line-height:1;margin:0}
+.eyebrow{font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid transparent;border-radius:10px;padding:10px 16px;cursor:pointer;font-weight:600;font-size:15px;text-decoration:none;background:var(--surface-2);color:var(--ink);white-space:nowrap}
+.btn:hover{border-color:var(--line)}
+.btn.primary{background:var(--cantera);color:var(--on-accent)}
+.btn.primary:hover{background:var(--cantera-deep);color:#fff}
+.btn.danger{background:none;color:var(--danger);border-color:color-mix(in srgb,var(--danger) 40%,transparent)}
+.btn.small{padding:6px 12px;font-size:14px}
+.btn:disabled{opacity:.6;cursor:wait}
+
+/* Entrada */
+.login{min-height:100vh;display:grid;place-items:center;padding:24px}
+.login form{width:100%;max-width:380px;display:grid;gap:16px;background:var(--surface);padding:28px;border-radius:16px;border:1px solid var(--line)}
+.login h1{font-size:40px}
+.mark{width:44px;height:44px}
+
+/* Barra superior */
+.top{position:sticky;top:0;z-index:10;background:var(--surface);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top,0px)}
+.top .wrap{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:60px}
+.top-brand{display:flex;align-items:center;gap:10px}
+.top-brand b{font-family:var(--font-display);font-size:24px;text-transform:uppercase}
+.top-actions{display:flex;gap:8px}
+.tabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;border-top:1px solid var(--line)}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{border:0;background:none;padding:12px 14px;cursor:pointer;font-weight:600;color:var(--muted);border-bottom:2px solid transparent;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--cantera)}
+
+main{padding-block:24px 80px}
+.head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+.head h1{font-size:40px}
+
+/* Lista */
+.list{display:grid;gap:8px}
+.row{display:grid;grid-template-columns:64px minmax(0,1fr) auto;gap:14px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px}
+.row img,.row .ph{width:64px;height:64px;border-radius:8px;object-fit:cover;background:var(--surface-2)}
+.row .ph{display:grid;place-items:center;font-family:var(--font-display);font-size:22px;color:var(--muted)}
+.row b{display:block;font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row small{display:block;color:var(--muted);font-size:13px}
+.row .acts{display:flex;gap:6px}
+@media (max-width:560px){.row{grid-template-columns:52px minmax(0,1fr)}.row img,.row .ph{width:52px;height:52px}.row .acts{grid-column:1/-1;justify-content:flex-end}}
+.tag{display:inline-block;font-family:var(--font-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:2px 8px;border-radius:999px;margin-right:6px}
+.tag.ok{background:color-mix(in srgb,var(--ok) 20%,transparent);color:var(--ok)}
+.tag.draft{background:var(--surface-2);color:var(--muted)}
+.empty{padding:28px;border:1px dashed var(--line);border-radius:12px;color:var(--muted);text-align:center}
+
+/* Formulario */
+.form{display:grid;gap:18px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px}
+.field{display:grid;gap:6px}
+.field label{font-weight:600}
+.field .help{font-size:13px;color:var(--muted)}
+input[type=text],input[type=url],input[type=email],input[type=tel],input[type=password],input[type=date],input[type=time],input[type=number],textarea,select{
+  width:100%;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:11px 12px;font-size:16px}
+textarea{min-height:110px;resize:vertical}
+textarea.big{min-height:320px;font-family:var(--font-mono);font-size:14px;line-height:1.6}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media (max-width:560px){.grid2{grid-template-columns:1fr}}
+.days{display:flex;gap:6px;flex-wrap:wrap}
+.days label{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:6px 12px;cursor:pointer;font-weight:500}
+.days input{accent-color:var(--cantera)}
+.check{display:flex;align-items:center;gap:10px;font-weight:600}
+.check input{width:20px;height:20px;accent-color:var(--cantera)}
+.img-field{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.img-field .preview{width:160px;aspect-ratio:16/10;border-radius:10px;background:var(--surface-2);object-fit:cover;display:grid;place-items:center;color:var(--muted);font-size:13px;text-align:center;padding:8px}
+.img-field img.preview{padding:0}
+.img-btns{display:flex;flex-direction:column;gap:8px}
+.form-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:space-between;border-top:1px solid var(--line);padding-top:18px}
+.form-actions div{display:flex;gap:10px;flex-wrap:wrap}
+.md-tools{display:flex;gap:6px;flex-wrap:wrap}
+.preview-body{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-height:200px;font-family:Georgia,serif;font-size:17px;line-height:1.7}
+.preview-body h3{font-family:var(--font-display);text-transform:uppercase;font-size:26px;margin:18px 0 6px}
+.err{color:var(--danger);font-weight:600}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:999px;font-weight:600;z-index:50;max-width:calc(100% - 32px)}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="mark" viewBox="0 0 40 40"><path d="M6 36V20a14 14 0 0 1 28 0v16h-6V20a8 8 0 0 0-16 0v16Z" fill="var(--cantera)"/><circle cx="20" cy="22" r="2.6" fill="var(--suela)"/></symbol>
+</svg>
+
+<!-- Entrada -->
+<div class="login" id="loginView" hidden>
+  <form id="loginForm">
+    <svg class="mark"><use href="#mark"/></svg>
+    <div><span class="eyebrow">Radio de León</span><h1>Panel</h1></div>
+    <div class="field"><label for="pw">Contraseña</label><input type="password" id="pw" autocomplete="current-password" required></div>
+    <p class="err" id="loginErr" hidden></p>
+    <button class="btn primary" id="loginBtn">Entrar</button>
+  </form>
+</div>
+
+<!-- Panel -->
+<div id="appView" hidden>
+  <header class="top">
+    <div class="wrap">
+      <div class="top-brand"><svg class="mark" style="width:30px;height:30px"><use href="#mark"/></svg><b>Panel</b></div>
+      <div class="top-actions">
+        <a class="btn small" href="/" target="_blank" rel="noopener">Ver página</a>
+        <button class="btn small" id="logoutBtn">Salir</button>
+      </div>
+    </div>
+    <div class="wrap"><nav class="tabs" role="tablist" id="tabs"></nav></div>
+  </header>
+  <main class="wrap" id="main"></main>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script>
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+let toastT;
+function toast(m) { const t = $("#toast"); t.textContent = m; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => (t.hidden = true), 2800); }
+
+async function api(path, opts = {}) {
+  const r = await fetch("/api/admin" + path, { credentials: "same-origin", ...opts,
+    headers: opts.body && !(opts.body instanceof Blob) ? { "content-type": "application/json" } : opts.headers });
+  const data = await r.json().catch(() => ({}));
+  if (r.status === 401 && path !== "/login") { showLogin(); throw new Error(data.error || "Tu sesión terminó"); }
+  if (!r.ok) throw new Error(data.error || "Algo salió mal");
+  return data;
+}
+
+/* ---------- Qué se administra ---------- */
+const DIAS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
+const TYPES = {
+  posts: {
+    tab: "Noticias", one: "nota", nueva: "Nueva nota",
+    rowTitle: (r) => r.title, rowSub: (r) => `${r.published ? '<span class="tag ok">Publicada</span>' : '<span class="tag draft">Borrador</span>'}${esc(r.category || "")} · ${fecha(r.published_at || r.created_at)}`,
+    rowImg: (r) => r.image,
+    fields: [
+      { k: "title", label: "Título", type: "text", required: true },
+      { k: "category", label: "Categoría", type: "text", list: ["Noticias", "La radio", "Programación", "Comunidad", "Eventos", "Música", "León"], help: "Sale arriba del título, por ejemplo: Noticias, Música, León." },
+      { k: "image", label: "Foto principal", type: "image", help: "Horizontal se ve mejor. Es la foto que aparece al compartir por WhatsApp." },
+      { k: "excerpt", label: "Resumen", type: "textarea", help: "Una o dos líneas. Aparece debajo del título y al compartir." },
+      { k: "body", label: "Texto de la nota", type: "markdown" },
+      { k: "slug", label: "Enlace de la nota (opcional)", type: "text", help: "Si lo dejas vacío se crea solo a partir del título." },
+    ],
+  },
+  shows: {
+    tab: "Programas", one: "programa", nueva: "Nuevo programa",
+    rowTitle: (r) => r.name, rowSub: (r) => `${esc(String(r.days || "").split(",").filter(Boolean).map((d) => DIAS[d - 1]).join(" · "))} · ${esc(r.start_time || "")}–${esc(r.end_time || "")}${r.host ? " · " + esc(r.host) : ""}`,
+    rowImg: (r) => r.image,
+    fields: [
+      { k: "name", label: "Nombre del programa", type: "text", required: true },
+      { k: "host", label: "Locutor o locutores", type: "text" },
+      { k: "image", label: "Foto del programa o del locutor", type: "image" },
+      { k: "days", label: "Días", type: "days" },
+      { row: [{ k: "start_time", label: "Empieza", type: "time" }, { k: "end_time", label: "Termina", type: "time" }] },
+      { k: "description", label: "Descripción", type: "textarea" },
+      { k: "sort", label: "Orden en la lista", type: "number", help: "Número menor sale primero. Puedes dejarlo en 0." },
+    ],
+  },
+  events: {
+    tab: "Eventos", one: "evento", nueva: "Nuevo evento",
+    rowTitle: (r) => r.title, rowSub: (r) => `${fecha(r.date + "T12:00:00")}${r.place ? " · " + esc(r.place) : ""}`,
+    rowImg: (r) => r.image,
+    fields: [
+      { k: "title", label: "Nombre del evento", type: "text", required: true },
+      { row: [{ k: "date", label: "Fecha", type: "date", required: true }, { k: "time", label: "Hora", type: "text", placeholder: "8:00 pm" }] },
+      { k: "place", label: "Lugar", type: "text", placeholder: "Plaza Principal, León" },
+      { k: "image", label: "Imagen o cartel", type: "image" },
+      { k: "description", label: "Descripción", type: "textarea" },
+      { k: "link", label: "Enlace para más información (opcional)", type: "url", placeholder: "https://" },
+    ],
+  },
+  sponsors: {
+    tab: "Patrocinadores", one: "patrocinador", nueva: "Nuevo patrocinador",
+    rowTitle: (r) => r.name, rowSub: (r) => r.active ? '<span class="tag ok">Visible</span>' : '<span class="tag draft">Oculto</span>',
+    rowImg: (r) => r.logo,
+    fields: [
+      { k: "name", label: "Nombre", type: "text", required: true },
+      { k: "logo", label: "Logo", type: "image", help: "PNG con fondo transparente se ve mejor." },
+      { k: "url", label: "Página o redes del patrocinador (opcional)", type: "url", placeholder: "https://" },
+      { k: "active", label: "Mostrar en la página", type: "check", default: 1 },
+      { k: "sort", label: "Orden", type: "number" },
+    ],
+  },
+};
+const fecha = (iso) => iso ? new Date(iso).toLocaleDateString("es-MX", { day: "numeric", month: "short", year: "numeric" }) : "";
+
+/* ---------- Entrada y salida ---------- */
+function showLogin() { $("#appView").hidden = true; $("#loginView").hidden = false; setTimeout(() => $("#pw").focus(), 50); }
+function showApp() { $("#loginView").hidden = true; $("#appView").hidden = false; }
+$("#loginForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const btn = $("#loginBtn"); btn.disabled = true; $("#loginErr").hidden = true;
+  try {
+    await api("/login", { method: "POST", body: JSON.stringify({ password: $("#pw").value }) });
+    $("#pw").value = ""; showApp(); go("posts");
+  } catch (err) { $("#loginErr").textContent = err.message; $("#loginErr").hidden = false; }
+  btn.disabled = false;
+});
+$("#logoutBtn").addEventListener("click", async () => { await api("/logout", { method: "POST" }).catch(() => {}); showLogin(); });
+
+/* ---------- Pestañas ---------- */
+const TABS = [...Object.keys(TYPES), "settings"];
+$("#tabs").innerHTML = TABS.map((t) => `<button role="tab" data-tab="${t}">${t === "settings" ? "Ajustes" : TYPES[t].tab}</button>`).join("");
+$("#tabs").addEventListener("click", (e) => { const b = e.target.closest("[data-tab]"); if (b) go(b.dataset.tab); });
+let current = "posts";
+function go(tab) {
+  current = tab;
+  $$("#tabs button").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.tab === tab)));
+  tab === "settings" ? settingsView() : listView(tab);
+  scrollTo(0, 0);
+}
+
+/* ---------- Lista ---------- */
+async function listView(type) {
+  const T = TYPES[type], main = $("#main");
+  main.innerHTML = `<div class="head"><h1>${T.tab}</h1><button class="btn primary" id="newBtn">+ ${T.nueva}</button></div><div class="list" id="list"><p class="eyebrow">Cargando…</p></div>`;
+  $("#newBtn").onclick = () => formView(type, null);
+  try {
+    const rows = await api("/" + type);
+    $("#list").innerHTML = rows.length ? rows.map((r) => `
+      <div class="row">
+        ${T.rowImg(r) ? `<img src="${esc(T.rowImg(r))}" alt="">` : `<div class="ph">${esc((T.rowTitle(r) || "?")[0])}</div>`}
+        <div style="min-width:0"><b>${esc(T.rowTitle(r))}</b><small>${T.rowSub(r)}</small></div>
+        <div class="acts">
+          ${type === "posts" && r.published ? `<a class="btn small" href="/nota/${esc(r.slug)}" target="_blank" rel="noopener">Ver</a>` : ""}
+          <button class="btn small" data-edit="${r.id}">Editar</button>
+        </div>
+      </div>`).join("") : `<div class="empty">Todavía no hay ${T.tab.toLowerCase()}. Usa “${T.nueva}” para crear el primero.</div>`;
+    $("#list").onclick = (e) => { const b = e.target.closest("[data-edit]"); if (b) formView(type, rows.find((r) => r.id === +b.dataset.edit)); };
+  } catch (err) { $("#list").innerHTML = `<p class="err">${esc(err.message)}</p>`; }
+}
+
+/* ---------- Formulario ---------- */
+function fieldHtml(f, rec) {
+  if (f.row) return `<div class="grid2">${f.row.map((x) => fieldHtml(x, rec)).join("")}</div>`;
+  const v = rec ? rec[f.k] : f.default;
+  const id = "f_" + f.k, req = f.required ? " required" : "";
+  const help = f.help ? `<span class="help">${esc(f.help)}</span>` : "";
+  const ph = f.placeholder ? ` placeholder="${esc(f.placeholder)}"` : "";
+  switch (f.type) {
+    case "textarea": return `<div class="field"><label for="${id}">${f.label}</label>${help}<textarea id="${id}" name="${f.k}"${req}>${esc(v)}</textarea></div>`;
+    case "markdown": return `<div class="field"><label for="${id}">${f.label}</label>
+      <span class="help">Deja una línea en blanco entre párrafos. <b>## Subtítulo</b> · <b>**negritas**</b> · <b>*cursiva*</b> · listas con <b>- </b> · enlaces: [texto](https://…)</span>
+      <div class="md-tools"><button type="button" class="btn small" data-md="h">Subtítulo</button><button type="button" class="btn small" data-md="b">Negritas</button><button type="button" class="btn small" data-md="l">Enlace</button><button type="button" class="btn small" data-md="p">Vista previa</button></div>
+      <textarea class="big" id="${id}" name="${f.k}">${esc(v)}</textarea><div class="preview-body" id="mdPreview" hidden></div></div>`;
+    case "image": return `<div class="field"><label>${f.label}</label>${help}
+      <div class="img-field" data-img="${f.k}">
+        ${v ? `<img class="preview" src="${esc(v)}" alt="">` : `<div class="preview">Sin foto</div>`}
+        <div class="img-btns"><label class="btn small" style="cursor:pointer">${v ? "Cambiar foto" : "Subir foto"}<input type="file" accept="image/*" hidden></label>
+        ${v ? `<button type="button" class="btn small danger" data-rmimg>Quitar</button>` : ""}</div>
+        <input type="hidden" name="${f.k}" value="${esc(v)}">
+      </div></div>`;
+    case "days": {
+      const sel = String(v || "").split(",");
+      return `<div class="field"><label>${f.label}</label><div class="days">${DIAS.map((d, i) => `<label><input type="checkbox" name="days" value="${i + 1}"${sel.includes(String(i + 1)) ? " checked" : ""}>${d}</label>`).join("")}</div>
+        <div class="days"><button type="button" class="btn small" data-days="1,2,3,4,5">Lunes a viernes</button><button type="button" class="btn small" data-days="6,7">Fin de semana</button><button type="button" class="btn small" data-days="1,2,3,4,5,6,7">Diario</button></div></div>`;
+    }
+    case "check": return `<label class="check"><input type="checkbox" name="${f.k}"${v ? " checked" : ""}>${f.label}</label>`;
+    default: {
+      const list = f.list ? ` list="dl_${f.k}"` : "";
+      return `<div class="field"><label for="${id}">${f.label}</label>${help}<input type="${f.type}" id="${id}" name="${f.k}" value="${esc(v ?? "")}"${req}${ph}${list}>
+        ${f.list ? `<datalist id="dl_${f.k}">${f.list.map((o) => `<option value="${esc(o)}">`).join("")}</datalist>` : ""}</div>`;
+    }
+  }
+}
+function flatFields(T) { return T.fields.flatMap((f) => f.row || [f]); }
+
+function formView(type, rec) {
+  const T = TYPES[type], main = $("#main");
+  const isPost = type === "posts";
+  main.innerHTML = `
+    <div class="head"><button class="btn small" id="backBtn">← ${T.tab}</button></div>
+    <form class="form" id="form" novalidate>
+      <h1 style="font-size:34px">${rec ? "Editar " + T.one : T.nueva}</h1>
+      ${T.fields.map((f) => fieldHtml(f, rec)).join("")}
+      <p class="err" id="formErr" hidden></p>
+      <div class="form-actions">
+        <div>${rec ? `<button type="button" class="btn danger" id="delBtn">Borrar</button>` : ""}</div>
+        <div>${isPost ? `<button type="submit" class="btn" data-publish="0">Guardar borrador</button><button type="submit" class="btn primary" data-publish="1">${rec && rec.published ? "Guardar cambios" : "Publicar"}</button>`
+          : `<button type="submit" class="btn primary">Guardar</button>`}</div>
+      </div>
+    </form>`;
+  $("#backBtn").onclick = () => listView(type);
+  const form = $("#form");
+  let publishFlag = rec ? rec.published : 0;
+  $$("[data-publish]", form).forEach((b) => b.addEventListener("click", () => (publishFlag = +b.dataset.publish)));
+
+  form.addEventListener("click", (e) => {
+    const d = e.target.closest("[data-days]");
+    if (d) { const set = d.dataset.days.split(","); $$('input[name="days"]', form).forEach((c) => (c.checked = set.includes(c.value))); }
+    const mdb = e.target.closest("[data-md]");
+    if (mdb) mdAction(mdb.dataset.md);
+    const rm = e.target.closest("[data-rmimg]");
+    if (rm) { const box = rm.closest("[data-img]"); setImage(box, ""); }
+    const del = e.target.closest("#delBtn");
+    if (del) remove(type, rec);
+  });
+  $$("[data-img] input[type=file]", form).forEach((inp) => inp.addEventListener("change", () => uploadImage(inp)));
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const err = $("#formErr"); err.hidden = true;
+    const data = {};
+    for (const f of flatFields(T)) {
+      if (f.type === "days") data.days = $$('input[name="days"]:checked', form).map((c) => c.value).join(",");
+      else if (f.type === "check") data[f.k] = form.elements[f.k].checked ? 1 : 0;
+      else if (f.type === "number") data[f.k] = parseInt(form.elements[f.k].value || "0", 10) || 0;
+      else data[f.k] = form.elements[f.k].value.trim();
+      if (f.required && !data[f.k]) { err.textContent = `Falta llenar: ${f.label}.`; err.hidden = false; form.elements[f.k].focus(); return; }
+    }
+    if (type === "shows" && !data.days) { err.textContent = "Elige al menos un día."; err.hidden = false; return; }
+    if (isPost) data.published = publishFlag;
+    const btns = $$("button[type=submit]", form); btns.forEach((b) => (b.disabled = true));
+    try {
+      await api(`/${type}${rec ? "/" + rec.id : ""}`, { method: rec ? "PUT" : "POST", body: JSON.stringify(data) });
+      toast(isPost ? (publishFlag ? "Nota publicada" : "Borrador guardado") : "Guardado");
+      listView(type);
+    } catch (er) { err.textContent = er.message; err.hidden = false; btns.forEach((b) => (b.disabled = false)); }
+  });
+}
+
+async function remove(type, rec) {
+  const T = TYPES[type];
+  if (!confirm(`¿Borrar ${T.one} “${T.rowTitle(rec)}”? No se puede deshacer.`)) return;
+  try { await api(`/${type}/${rec.id}`, { method: "DELETE" }); toast("Borrado"); listView(type); }
+  catch (er) { toast(er.message); }
+}
+
+/* ---------- Texto con formato ---------- */
+function mdAction(kind) {
+  const ta = $("textarea.big"); if (!ta) return;
+  if (kind === "p") {
+    const pv = $("#mdPreview"); const showing = !pv.hidden;
+    pv.hidden = showing; ta.hidden = !showing;
+    if (!showing) pv.innerHTML = md(ta.value);
+    return;
+  }
+  const s = ta.selectionStart, e = ta.selectionEnd, sel = ta.value.slice(s, e);
+  let ins = sel;
+  if (kind === "b") ins = `**${sel || "texto en negritas"}**`;
+  if (kind === "h") ins = `\n\n## ${sel || "Subtítulo"}\n\n`;
+  if (kind === "l") { const u = prompt("Pega el enlace (https://…)"); if (!u) return; ins = `[${sel || "texto del enlace"}](${u})`; }
+  ta.setRangeText(ins, s, e, "end"); ta.focus();
+}
+function md(text) {
+  const inline = (s) => esc(s).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>").replace(/\*(.+?)\*/g, "<em>$1</em>")
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+  return String(text || "").split(/\n{2,}/).map((b) => {
+    b = b.trim(); if (!b) return "";
+    if (b.startsWith("## ")) return `<h3>${inline(b.slice(3))}</h3>`;
+    if (b.split("\n").every((l) => /^[-*] /.test(l))) return `<ul>${b.split("\n").map((l) => `<li>${inline(l.slice(2))}</li>`).join("")}</ul>`;
+    return `<p>${b.split("\n").map(inline).join("<br>")}</p>`;
+  }).join("") || "<p style='color:var(--muted)'>Aún no hay texto.</p>";
+}
+
+/* ---------- Fotos: se reducen en el celular antes de subirlas ---------- */
+async function shrink(file, max = 1600) {
+  const bmp = await createImageBitmap(file);
+  const scale = Math.min(1, max / Math.max(bmp.width, bmp.height));
+  const c = document.createElement("canvas");
+  c.width = Math.round(bmp.width * scale); c.height = Math.round(bmp.height * scale);
+  c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+  return new Promise((res) => c.toBlob((b) => res(b), "image/webp", 0.82));
+}
+async function uploadImage(inp) {
+  const file = inp.files[0]; if (!file) return;
+  const box = inp.closest("[data-img]");
+  box.querySelector(".preview").outerHTML = `<div class="preview">Subiendo…</div>`;
+  try {
+    const blob = await shrink(file);
+    const r = await fetch("/api/admin/upload", { method: "POST", body: blob, headers: { "content-type": blob.type || "image/webp" }, credentials: "same-origin" });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(data.error || "No se pudo subir la foto");
+    setImage(box, data.url);
+  } catch (er) { setImage(box, box.querySelector("input[type=hidden]").value); toast(er.message); }
+}
+function setImage(box, url) {
+  box.querySelector("input[type=hidden]").value = url;
+  box.querySelector(".preview").outerHTML = url ? `<img class="preview" src="${esc(url)}" alt="">` : `<div class="preview">Sin foto</div>`;
+  box.querySelector(".img-btns").innerHTML = `<label class="btn small" style="cursor:pointer">${url ? "Cambiar foto" : "Subir foto"}<input type="file" accept="image/*" hidden></label>${url ? `<button type="button" class="btn small danger" data-rmimg>Quitar</button>` : ""}`;
+  box.querySelector("input[type=file]").addEventListener("change", (e) => uploadImage(e.target));
+}
+
+/* ---------- Ajustes ---------- */
+const SETTINGS = [
+  { k: "about", label: "Sobre la radio", type: "textarea", help: "Aparece en la sección Contacto." },
+  { k: "whatsapp", label: "WhatsApp", type: "tel", placeholder: "524771234567", help: "Con lada de país (52) y sin espacios." },
+  { k: "email", label: "Correo", type: "email" },
+  { k: "facebook", label: "Facebook", type: "text", placeholder: "radiodeleon o https://facebook.com/…" },
+  { k: "instagram", label: "Instagram", type: "text", placeholder: "@radiodeleon" },
+  { k: "tiktok", label: "TikTok", type: "text", placeholder: "@radiodeleon" },
+  { k: "youtube", label: "YouTube", type: "text", placeholder: "@radiodeleon" },
+];
+async function settingsView() {
+  const main = $("#main");
+  main.innerHTML = `<div class="head"><h1>Ajustes</h1></div><p class="eyebrow">Cargando…</p>`;
+  try {
+    const st = await api("/settings");
+    main.innerHTML = `<div class="head"><h1>Ajustes</h1></div>
+      <form class="form" id="setForm">${SETTINGS.map((f) => fieldHtml(f, st)).join("")}
+        <p class="help" style="color:var(--muted);margin:0">Las redes que dejes vacías no aparecen en la página.</p>
+        <div class="form-actions"><div></div><div><button class="btn primary">Guardar ajustes</button></div></div></form>`;
+    $("#setForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const data = Object.fromEntries(SETTINGS.map((f) => [f.k, e.target.elements[f.k].value.trim()]));
+      try { await api("/settings", { method: "PUT", body: JSON.stringify(data) }); toast("Ajustes guardados"); }
+      catch (er) { toast(er.message); }
+    });
+  } catch (er) { main.innerHTML = `<p class="err">${esc(er.message)}</p>`; }
+}
+
+/* ---------- Inicio ---------- */
+api("/me").then(() => { showApp(); go("posts"); }).catch(() => showLogin());
+</script>
+</body>
+</html>

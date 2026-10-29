@@ -1,0 +1,32 @@
+# Radio de León — configuración de Cloudflare
+name = "radiodeleon-web"
+main = "src/worker.js"
+compatibility_date = "2025-09-01"
+
+# La página y el panel (carpeta public/). El Worker revisa cada visita primero.
+[assets]
+directory = "./public"
+binding = "ASSETS"
+run_worker_first = true
+
+# Dirección pública de la página
+routes = [
+  { pattern = "radiodeleon.nanostudio.com.mx", custom_domain = true }
+]
+
+# Base de datos de notas, programas, eventos, patrocinadores y ajustes.
+# Base creada en el panel de Cloudflare (radiodeleon-db).
+[[d1_databases]]
+binding = "DB"
+database_name = "radiodeleon-db"
+database_id = "6f702dc0-2439-4307-87b4-9c13f194db13"
+
+# Fotos de las notas, programas, eventos y logos.
+# Almacén creado en el panel de Cloudflare (radiodeleon-imagenes).
+[[kv_namespaces]]
+binding = "IMAGES"
+id = "8db444228a804cbabc504db60ffa145a"
+
+# La contraseña del panel NO va aquí. Se guarda como secreto:
+#   npx wrangler secret put ADMIN_PASSWORD
+#   npx wrangler secret put SESSION_SECRET

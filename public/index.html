@@ -1,0 +1,656 @@
+<!doctype html>
+<html lang="es-MX">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Radio de León</title>
+<meta name="description" content="La radio por internet de León, Guanajuato. Música las 24 horas, noticias, programas y eventos.">
+<meta name="theme-color" content="#16110f">
+<meta property="og:title" content="Radio de León">
+<meta property="og:description" content="La radio por internet de León, Guanajuato. Música las 24 horas, noticias, programas y eventos.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://radiodeleon.nanostudio.com.mx/">
+<meta property="og:image" content="https://radiodeleon.nanostudio.com.mx/og.png">
+<meta property="og:site_name" content="Radio de León">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800;900&family=Literata:opsz,wght@7..72,400;7..72,600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* =============================================================
+   RADIO DE LEÓN — página pública
+   Cantera rosa del Arco de la Calzada + piel curtida del calzado.
+   Barra lateral fija con el reproductor (como las radios de
+   Ibiza); la música no se corta al cambiar de sección.
+   ============================================================= */
+:root{
+  --bg:#16110f; --surface:#211915; --surface-2:#2c221d; --ink:#f4e9e2; --muted:#b9a59a; --line:#3b2e27;
+  --cantera:#e39a86; --cantera-deep:#c4705b; --suela:#c98a45; --live:#ff4d3d; --on-accent:#1a100c;
+  --font-display:"Big Shoulders Display","Arial Narrow",Impact,sans-serif;
+  --font-body:"Literata",Georgia,"Times New Roman",serif;
+  --font-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+  --radius:14px; --side:320px; --dock:72px;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme: light){
+  :root{--bg:#f6efea;--surface:#fffaf7;--surface-2:#f0e4dc;--ink:#24180f;--muted:#6f5a4d;--line:#e2d2c7;
+    --cantera:#b8563f;--cantera-deep:#93402c;--suela:#9a6024;--live:#d92b1c;--on-accent:#fff;color-scheme:light}
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:17px;line-height:1.6}
+img{max-width:100%;display:block}
+a{color:var(--cantera)}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--cantera);outline-offset:3px;border-radius:6px}
+h1,h2,h3{font-family:var(--font-display);line-height:.95;margin:0;text-wrap:balance}
+.eyebrow{font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.btn{display:inline-flex;align-items:center;gap:8px;border:0;border-radius:999px;padding:10px 18px;cursor:pointer;font-family:var(--font-mono);font-size:13px;font-weight:600;text-decoration:none;background:var(--ink);color:var(--bg)}
+.btn.ghost{background:none;border:1px solid var(--line);color:var(--ink)}
+.btn.wa{background:#25d366;color:#08311a}
+
+/* ---------- Estructura ---------- */
+.side{position:fixed;inset:0 auto 0 0;width:var(--side);background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;overflow-y:auto;z-index:30;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px)}
+main{margin-left:var(--side);min-height:100%;padding-bottom:40px}
+.mtop,.dock,.scrim{display:none}
+@media (max-width:979px){
+  :root{--side:300px}
+  main{margin-left:0;padding-bottom:calc(var(--dock) + 40px + env(safe-area-inset-bottom,0px))}
+  .side{transform:translateX(-100%);transition:transform .25s ease;box-shadow:20px 0 40px rgba(0,0,0,.35)}
+  .side.open{transform:none}
+  .scrim{display:block;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:25}
+  .mtop{display:flex;position:sticky;top:0;z-index:20;align-items:center;justify-content:space-between;gap:12px;background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:calc(10px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px))}
+  .dock{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surface);border-top:1px solid var(--line);align-items:center;gap:12px;min-height:var(--dock);padding:8px max(16px,env(safe-area-inset-right,0px)) calc(8px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+}
+@media (prefers-reduced-motion: reduce){.side{transition:none}}
+
+/* ---------- Barra lateral ---------- */
+.side-in{padding:22px 22px 18px;display:flex;flex-direction:column;gap:22px;flex:1}
+.brand{display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--ink)}
+.brand svg{width:40px;height:40px;flex:none}
+.brand b{display:block;font-family:var(--font-display);font-weight:900;font-size:27px;text-transform:uppercase;line-height:.95}
+.brand small{display:block;font-family:var(--font-mono);font-size:10px;letter-spacing:.18em;color:var(--muted);margin-top:4px}
+.nav{display:flex;flex-direction:column;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding-block:8px}
+.nav a{font-family:var(--font-display);font-weight:800;font-size:22px;text-transform:uppercase;text-decoration:none;color:var(--muted);padding:5px 0;display:flex;justify-content:space-between;align-items:center}
+.nav a:hover,.nav a[aria-current="page"]{color:var(--ink)}
+.nav a[aria-current="page"]::after{content:"";width:8px;height:8px;border-radius:50%;background:var(--cantera)}
+
+.onair{display:flex;flex-direction:column;gap:14px}
+.onair-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.pill{display:inline-flex;align-items:center;gap:7px;font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;border:1px solid var(--line);border-radius:999px;padding:4px 10px;color:var(--muted)}
+.pill .dot{width:7px;height:7px;border-radius:50%;background:var(--muted)}
+.pill.on{color:var(--ink)}
+.pill.on .dot{background:var(--live);animation:pulse 1.8s infinite}
+.pill.live{background:var(--live);border-color:var(--live);color:#fff}
+.pill.live .dot{background:#fff}
+@keyframes pulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--live) 55%,transparent)}70%{box-shadow:0 0 0 8px transparent}100%{box-shadow:0 0 0 0 transparent}}
+@media (prefers-reduced-motion: reduce){.pill.on .dot{animation:none}}
+.show-now{font-family:var(--font-mono);font-size:12px;color:var(--suela)}
+.show-now b{display:block;line-height:1;margin-top:4px;font-family:var(--font-display);font-size:22px;color:var(--ink);text-transform:uppercase;letter-spacing:.01em}
+.player{display:flex;gap:14px;align-items:center}
+.play{width:64px;height:64px;border-radius:50%;border:0;background:var(--cantera);color:var(--on-accent);cursor:pointer;display:grid;place-items:center;flex:none;transition:transform .15s,background .2s}
+.play:hover{background:var(--cantera-deep);color:#fff}
+.play:active{transform:scale(.95)}
+.play svg{width:26px;height:26px}
+.track{min-width:0}
+.track b{display:block;font-family:var(--font-display);font-size:21px;font-weight:800;text-transform:uppercase;line-height:1.05;overflow-wrap:anywhere}
+.track span{display:block;color:var(--cantera);font-size:14px;margin-top:3px;overflow-wrap:anywhere}
+.nowrow{display:flex;gap:14px;align-items:center;min-width:0}
+.nowrow .show-now{min-width:0}
+.art{aspect-ratio:1;width:96px;flex:none;border-radius:12px;object-fit:cover;background:var(--surface-2)}
+.art-ph{aspect-ratio:1;width:96px;flex:none;border-radius:12px;background:
+  radial-gradient(circle at 50% 120%,transparent 38%,color-mix(in srgb,var(--cantera) 22%,transparent) 38.5% 46%,transparent 46.5% 54%,color-mix(in srgb,var(--cantera) 14%,transparent) 54.5% 62%,transparent 62.5%),var(--surface-2);display:grid;place-items:center}
+.art-ph svg{width:44%;opacity:.9}
+.bar{height:4px;background:var(--surface-2);border-radius:99px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--suela),var(--cantera));transition:width 1s linear}
+.times{display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:11px;color:var(--muted);margin-top:4px;font-variant-numeric:tabular-nums}
+.next{display:flex;gap:10px;align-items:center;font-size:13px;color:var(--muted);min-width:0}
+.next b{color:var(--ink);font-weight:600}
+.next span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.vol{display:flex;align-items:center;gap:10px}
+.vol input{flex:1;accent-color:var(--cantera)}
+.side-foot{margin-top:auto;display:flex;flex-direction:column;gap:12px}
+.socials{display:flex;gap:8px;flex-wrap:wrap}
+.socials a{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);display:grid;place-items:center;color:var(--ink)}
+.socials a:hover{border-color:var(--cantera);color:var(--cantera)}
+.socials svg{width:17px;height:17px}
+
+/* Móvil */
+.menu-btn{background:none;border:1px solid var(--line);border-radius:999px;padding:8px 14px;cursor:pointer;font-family:var(--font-mono);font-size:12px;display:flex;gap:8px;align-items:center}
+.mtop .brand b{font-size:23px}
+.mtop .brand svg{width:32px;height:32px}
+.dock .play{width:48px;height:48px}
+.dock .play svg{width:20px;height:20px}
+.dock img,.dock .ph{width:44px;height:44px;border-radius:8px;object-fit:cover;flex:none;background:var(--surface-2)}
+.dock .track{flex:1}
+.dock .track b{font-size:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dock .track span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px}
+
+/* ---------- Contenido ---------- */
+.page{padding:28px max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px));max-width:1240px}
+@media (min-width:980px){.page{padding:32px 40px 0}}
+.sec{margin-top:56px}
+.sec:first-child{margin-top:0}
+.sec-head{display:flex;align-items:end;justify-content:space-between;gap:16px;flex-wrap:wrap;border-bottom:2px solid var(--ink);padding-bottom:10px;margin-bottom:22px}
+.sec-head h1,.sec-head h2{font-size:clamp(36px,5vw,58px);font-weight:900;text-transform:uppercase}
+.sec-head a{font-family:var(--font-mono);font-size:13px;text-decoration:none}
+
+/* Mosaico de noticias */
+.mosaic{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:260px;gap:14px}
+.mosaic .card:first-child{grid-column:span 2;grid-row:span 2}
+@media (max-width:1180px){.mosaic{grid-template-columns:repeat(2,minmax(0,1fr))}.mosaic .card:first-child{grid-column:span 2;grid-row:span 1}}
+@media (max-width:560px){.mosaic{grid-template-columns:1fr;grid-auto-rows:230px}.mosaic .card:first-child{grid-column:auto;grid-row:span 1;}}
+.card{position:relative;display:flex;flex-direction:column;justify-content:flex-end;border-radius:var(--radius);overflow:hidden;text-decoration:none;color:#fff;background:var(--surface-2);min-width:0;isolation:isolate}
+.card img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-2;transition:transform .5s ease}
+.card:hover img{transform:scale(1.04)}
+@media (prefers-reduced-motion: reduce){.card img{transition:none}.card:hover img{transform:none}}
+.card::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,transparent 30%,rgba(10,6,4,.88))}
+.card.noimg{color:var(--ink);background:
+  repeating-linear-gradient(135deg,transparent 0 22px,color-mix(in srgb,var(--cantera) 9%,transparent) 22px 23px),var(--surface)}
+.card.noimg::after{display:none}
+.card-in{padding:20px 20px 18px}
+.card .cat{font-family:var(--font-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--cantera)}
+.card:not(.noimg) .cat{color:#f2b5a5}
+.card h3{font-size:28px;font-weight:800;text-transform:uppercase;margin-top:8px}
+.mosaic .card:first-child h3{font-size:clamp(32px,4vw,54px)}
+.card .arrow{position:absolute;top:16px;right:16px;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:rgba(0,0,0,.35);color:#fff;font-size:16px}
+.card.noimg .arrow{background:var(--surface-2);color:var(--ink)}
+.more-wrap{display:flex;justify-content:center;margin-top:24px}
+
+/* Nota */
+.article{max-width:760px}
+.article-hero{border-radius:var(--radius);overflow:hidden;aspect-ratio:16/9;background:var(--surface-2);max-width:100%}
+.article-hero img{width:100%;height:100%;object-fit:cover}
+.article h1{font-size:clamp(42px,7vw,78px);font-weight:900;text-transform:uppercase;margin:16px 0 18px}
+.article .lead{font-size:21px;color:var(--muted);margin:0 0 26px}
+.prose{font-size:19px;line-height:1.75}
+.prose p{margin:0 0 1.1em;max-width:65ch}
+.prose h3{font-size:32px;font-weight:800;text-transform:uppercase;margin:36px 0 12px}
+.prose ul{padding-left:1.2em;margin:0 0 1.1em}
+.prose a{overflow-wrap:anywhere}
+.share{display:flex;gap:10px;flex-wrap:wrap;margin-top:30px;padding-top:20px;border-top:1px solid var(--line)}
+.back{display:inline-flex;gap:8px;font-family:var(--font-mono);font-size:13px;text-decoration:none;color:var(--muted);margin-bottom:22px}
+.back:hover{color:var(--ink)}
+
+/* Programas */
+.today{display:grid;gap:10px}
+.slot{display:grid;grid-template-columns:120px 64px minmax(0,1fr) auto;gap:16px;align-items:center;padding:12px 16px 12px 12px;border-radius:12px;background:var(--surface)}
+.slot .hrs{font-family:var(--font-mono);font-size:13px;color:var(--suela);font-variant-numeric:tabular-nums;padding-left:6px}
+.slot img,.slot .ph{width:64px;height:64px;border-radius:10px;object-fit:cover;background:var(--surface-2)}
+.slot b{display:block;font-family:var(--font-display);font-size:24px;font-weight:800;text-transform:uppercase;line-height:1}
+.slot small{color:var(--muted);font-size:14px}
+.slot.now{outline:2px solid var(--cantera)}
+@media (max-width:620px){.slot{grid-template-columns:56px minmax(0,1fr)}.slot .hrs{grid-column:1/-1;padding:0}.slot img,.slot .ph{width:56px;height:56px}.slot .pill{grid-column:1/-1;justify-self:start}}
+.days{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px}
+.days button{border:1px solid var(--line);background:none;border-radius:999px;padding:7px 14px;cursor:pointer;font-family:var(--font-mono);font-size:12px;color:var(--muted)}
+.days button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.show-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
+.show-card{background:var(--surface);border-radius:var(--radius);overflow:hidden;min-width:0}
+.show-card img,.show-card .ph{width:100%;aspect-ratio:4/3;object-fit:cover;background:var(--surface-2)}
+.show-card > div{padding:14px 16px 18px}
+.show-card b{display:block;font-family:var(--font-display);font-size:26px;font-weight:800;text-transform:uppercase;line-height:1}
+.show-card .hrs{font-family:var(--font-mono);font-size:12px;color:var(--suela);margin:6px 0}
+.show-card p{margin:0;font-size:15px;color:var(--muted)}
+
+/* Eventos */
+.events{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.event{display:grid;grid-template-columns:78px minmax(0,1fr);background:var(--surface);border-radius:var(--radius);overflow:hidden;min-width:0}
+.event .date{background:var(--cantera);color:var(--on-accent);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px 6px;text-align:center}
+.event .date b{font-family:var(--font-display);font-size:44px;font-weight:900;line-height:.9}
+.event .date span{font-family:var(--font-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase}
+.event .info{padding:14px 16px;min-width:0}
+.event .info b{display:block;font-family:var(--font-display);font-size:24px;font-weight:800;text-transform:uppercase;line-height:1}
+.event .info small{display:block;font-family:var(--font-mono);font-size:12px;color:var(--muted);margin-top:6px}
+.event .info p{margin:8px 0 0;font-size:15px}
+.event img{grid-column:1/-1;width:100%;aspect-ratio:16/9;object-fit:cover}
+.event.past{opacity:.6}
+
+/* Historial */
+.history{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}
+.history li{display:flex;gap:12px;align-items:center;padding:10px;border-radius:12px;background:var(--surface);min-width:0}
+.history img,.history .ph{width:48px;height:48px;border-radius:8px;object-fit:cover;flex:none;background:var(--surface-2)}
+.history .s{min-width:0}
+.history .t{font-family:var(--font-mono);font-size:11px;color:var(--suela)}
+.history b{display:block;font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.history small{display:block;color:var(--muted);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* Patrocinadores */
+.sponsors{display:flex;flex-wrap:wrap;gap:14px;align-items:center}
+.sponsor{display:grid;place-items:center;height:84px;min-width:150px;padding:14px 20px;border:1px solid var(--line);border-radius:12px;background:var(--surface);text-decoration:none;color:var(--ink);font-family:var(--font-display);font-size:22px;font-weight:800;text-transform:uppercase}
+.sponsor img{max-height:56px;max-width:160px;object-fit:contain}
+
+/* Contacto */
+.contact{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:28px}
+@media (max-width:820px){.contact{grid-template-columns:1fr}}
+.contact .about{font-size:20px;line-height:1.6;max-width:60ch}
+.box{background:var(--surface);border-radius:var(--radius);padding:20px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.copy{display:flex;gap:8px;align-items:center;background:var(--surface-2);border-radius:10px;padding:8px 8px 8px 12px;min-width:0}
+.copy code{font-family:var(--font-mono);font-size:12px;overflow-wrap:anywhere;flex:1;min-width:0}
+.empty{padding:26px;border:1px dashed var(--line);border-radius:var(--radius);color:var(--muted)}
+.loading{color:var(--muted);font-family:var(--font-mono);font-size:13px}
+footer{margin-top:64px;padding-top:20px;border-top:1px solid var(--line);color:var(--muted);font-size:14px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.toast{position:fixed;left:50%;bottom:calc(var(--dock) + 16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font-family:var(--font-mono);font-size:13px;z-index:60;max-width:calc(100% - 32px)}
+</style>
+</head>
+<body>
+
+<!-- Marca reutilizable: arco de cantera con un punto de "al aire" -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="mark" viewBox="0 0 40 40"><path d="M6 36V20a14 14 0 0 1 28 0v16h-6V20a8 8 0 0 0-16 0v16Z" fill="var(--cantera)"/><circle cx="20" cy="22" r="2.6" fill="var(--suela)"/></symbol>
+</svg>
+
+<header class="mtop">
+  <a class="brand" href="/" data-link><svg><use href="#mark"/></svg><b>Radio de León</b></a>
+  <button class="menu-btn" id="menuBtn" aria-expanded="false" aria-controls="side">
+    <svg width="16" height="12" viewBox="0 0 16 12" aria-hidden="true"><path d="M0 1h16M0 6h16M0 11h16" stroke="currentColor" stroke-width="1.6"/></svg>Menú
+  </button>
+</header>
+<div class="scrim" id="scrim" hidden></div>
+
+<aside class="side" id="side" aria-label="Radio de León">
+  <div class="side-in">
+    <a class="brand" href="/" data-link aria-label="Radio de León, inicio">
+      <svg><use href="#mark"/></svg>
+      <span><b>Radio de León</b><small>León, Gto. · En línea</small></span>
+    </a>
+
+    <nav class="nav" aria-label="Secciones">
+      <a href="/" data-link>Inicio</a>
+      <a href="/noticias" data-link>Noticias</a>
+      <a href="/programas" data-link>Programas</a>
+      <a href="/eventos" data-link>Eventos</a>
+      <a href="/contacto" data-link>Contacto</a>
+    </nav>
+
+    <section class="onair" aria-label="Al aire">
+      <div class="onair-head">
+        <span class="pill" id="onlinePill"><span class="dot"></span><span id="onlineText">Conectando</span></span>
+        <span class="pill live" id="livePill" hidden><span class="dot"></span>En vivo</span>
+      </div>
+      <div class="nowrow">
+        <img class="art" id="sideArt" alt="" hidden>
+        <div class="art-ph" id="sideArtPh"><svg viewBox="0 0 40 40"><use href="#mark"/></svg></div>
+        <div class="show-now" id="showNow">Música las 24 horas<b>Radio de León</b></div>
+      </div>
+      <div class="player">
+        <button class="play js-play" aria-label="Escuchar en vivo"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="ico" d="M8 5v14l11-7z" fill="currentColor"/></svg></button>
+        <div class="track"><b class="js-title">Radio de León</b><span class="js-artist">Toca play para escuchar</span></div>
+      </div>
+      <div><div class="bar"><i class="js-bar"></i></div><div class="times"><span class="js-el">en vivo</span><span class="js-du"></span></div></div>
+      <div class="next" id="nextLine" hidden><span class="eyebrow">Sigue</span><span><b id="nextTitle"></b> · <span id="nextArtist"></span></span></div>
+      <label class="vol"><span class="eyebrow">Vol</span><input type="range" id="vol" min="0" max="1" step="0.01" value="0.9" aria-label="Volumen"></label>
+    </section>
+
+    <div class="side-foot">
+      <div class="socials" id="socials"></div>
+      <span class="eyebrow" id="listeners"></span>
+    </div>
+  </div>
+</aside>
+
+<main>
+  <div class="page" id="view"><p class="loading">Cargando…</p></div>
+</main>
+
+<div class="dock" role="region" aria-label="Reproductor">
+  <button class="play js-play" aria-label="Escuchar en vivo"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="ico" d="M8 5v14l11-7z" fill="currentColor"/></svg></button>
+  <img id="dockArt" alt="" hidden><div class="ph" id="dockPh"></div>
+  <div class="track"><b class="js-title">Radio de León</b><span class="js-artist">Toca play para escuchar</span></div>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script>
+/* =============================================================
+   Ajustes de la radio (lo demás se administra en /admin)
+   ============================================================= */
+const RADIO = {
+  servidor: "https://radio.nanostudio.com.mx",
+  estacion: "radioleon",
+};
+const STREAM = `${RADIO.servidor}/listen/${RADIO.estacion}/radio.mp3`;
+
+/* ---------- Utilidades ---------- */
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const TZ = "America/Mexico_City";
+const DIAS = ["", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
+const MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+const fechaLarga = (iso) => new Date(iso).toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric", timeZone: TZ });
+const horaDe = (ts) => new Date(ts * 1000).toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit", timeZone: TZ });
+let toastT;
+function toast(m) { const t = $("#toast"); t.textContent = m; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => (t.hidden = true), 2600); }
+
+function md(text) {
+  // Formato sencillo: párrafos, ## subtítulos, **negritas**, *cursivas*, listas con "- " y enlaces
+  const inline = (s) => esc(s)
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*(.+?)\*/g, "<em>$1</em>")
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
+    .replace(/(^|[\s(])(https?:\/\/[^\s<)]+)/g, '$1<a href="$2" target="_blank" rel="noopener">$2</a>');
+  return String(text || "").replace(/\r/g, "").split(/\n{2,}/).map((b) => {
+    b = b.trim();
+    if (!b) return "";
+    if (b.startsWith("## ")) return `<h3>${inline(b.slice(3))}</h3>`;
+    if (b.split("\n").every((l) => /^[-*] /.test(l))) return `<ul>${b.split("\n").map((l) => `<li>${inline(l.slice(2))}</li>`).join("")}</ul>`;
+    return `<p>${b.split("\n").map(inline).join("<br>")}</p>`;
+  }).join("");
+}
+function mxNow() {
+  const parts = Object.fromEntries(new Intl.DateTimeFormat("en-US", { timeZone: TZ, weekday: "short", hour: "2-digit", minute: "2-digit", hour12: false }).formatToParts(new Date()).map((p) => [p.type, p.value]));
+  const day = { Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6, Sun: 7 }[parts.weekday];
+  return { day, min: (parseInt(parts.hour, 10) % 24) * 60 + parseInt(parts.minute, 10) };
+}
+const toMin = (t) => { const [h, m] = String(t || "0:0").split(":").map(Number); return h * 60 + m; };
+function showDays(s) { return String(s.days || "").split(",").map(Number).filter(Boolean); }
+function isOnAir(s, now = mxNow()) {
+  const a = toMin(s.start_time), b = toMin(s.end_time), d = showDays(s);
+  if (b > a) return d.includes(now.day) && now.min >= a && now.min < b;
+  const yesterday = now.day === 1 ? 7 : now.day - 1;   // programas que cruzan la medianoche
+  return (d.includes(now.day) && now.min >= a) || (d.includes(yesterday) && now.min < b);
+}
+const imgOr = (src, cls = "ph") => src ? `<img src="${esc(src)}" alt="" loading="lazy">` : `<div class="${cls}"></div>`;
+
+/* ---------- Datos ---------- */
+let HOME = null;
+async function api(path) {
+  const r = await fetch(path);
+  if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || "No se pudo cargar");
+  return r.json();
+}
+async function loadHome(force) {
+  if (!HOME || force) HOME = await api("/api/home");
+  renderSocials(HOME.settings);
+  updateShowNow();
+  return HOME;
+}
+
+/* ---------- Reproductor ---------- */
+const audio = new Audio();
+audio.preload = "none";
+let wantPlaying = false, retryT;
+try { const v = localStorage.getItem("rdl-vol"); if (v !== null) $("#vol").value = v; } catch (e) {}
+audio.volume = parseFloat($("#vol").value);
+$("#vol").addEventListener("input", (e) => { audio.volume = parseFloat(e.target.value); try { localStorage.setItem("rdl-vol", e.target.value); } catch (er) {} });
+const ICON = { play: "M8 5v14l11-7z", pause: "M7 5h4v14H7zM13 5h4v14h-4z", load: "M12 4a8 8 0 1 0 8 8h-2a6 6 0 1 1-6-6z" };
+function setState(s) {
+  $$(".ico").forEach((p) => p.setAttribute("d", ICON[s === "playing" ? "pause" : s === "loading" ? "load" : "play"]));
+  const label = s === "playing" ? "Pausar" : s === "loading" ? "Conectando" : "Escuchar en vivo";
+  $$(".js-play").forEach((b) => b.setAttribute("aria-label", label));
+  $$(".js-listen").forEach((b) => (b.textContent = s === "playing" ? "Pausar" : "Escuchar en vivo"));
+}
+function start() {
+  wantPlaying = true; setState("loading");
+  audio.src = `${STREAM}?t=${Date.now()}`;   // siempre la señal en vivo
+  audio.play().catch(() => { wantPlaying = false; setState("idle"); toast("Toca play otra vez para escuchar"); });
+}
+function stop() { wantPlaying = false; clearTimeout(retryT); audio.pause(); audio.removeAttribute("src"); audio.load(); setState("idle"); }
+const toggle = () => (wantPlaying ? stop() : start());
+audio.addEventListener("playing", () => setState("playing"));
+audio.addEventListener("waiting", () => wantPlaying && setState("loading"));
+audio.addEventListener("error", () => {
+  if (!wantPlaying) return;
+  setState("loading"); toast("Se perdió la señal, reconectando…");
+  clearTimeout(retryT); retryT = setTimeout(() => wantPlaying && start(), 4000);
+});
+document.addEventListener("click", (e) => { if (e.target.closest(".js-play, .js-listen")) toggle(); });
+if ("mediaSession" in navigator) {
+  navigator.mediaSession.setActionHandler("play", start);
+  navigator.mediaSession.setActionHandler("pause", stop);
+  navigator.mediaSession.setActionHandler("stop", stop);
+}
+
+/* ---------- Sonando ahora (AzuraCast) ---------- */
+let NP = null, prog = { el: 0, du: 0, at: Date.now() };
+async function refreshNP() {
+  try {
+    const r = await fetch(`${RADIO.servidor}/api/nowplaying/${RADIO.estacion}`, { cache: "no-store" });
+    if (!r.ok) throw 0;
+    NP = await r.json();
+    renderNP();
+  } catch (e) {
+    $("#onlinePill").classList.remove("on"); $("#onlineText").textContent = "Sin datos";
+  }
+}
+function renderNP() {
+  const np = NP;
+  $("#onlinePill").classList.toggle("on", !!np.is_online);
+  $("#onlineText").textContent = np.is_online ? "Al aire" : "Fuera del aire";
+  $("#livePill").hidden = !(np.live && np.live.is_live);
+  const s = (np.now_playing && np.now_playing.song) || {};
+  const title = s.title || s.text || "Radio de León", artist = s.artist || "Música las 24 horas";
+  $$(".js-title").forEach((e) => (e.textContent = title));
+  $$(".js-artist").forEach((e) => (e.textContent = artist));
+  $("#sideArt").hidden = $("#dockArt").hidden = !s.art;
+  $("#sideArtPh").hidden = $("#dockPh").hidden = !!s.art;
+  if (s.art) { $("#sideArt").src = s.art; $("#dockArt").src = s.art; }
+  const nx = np.playing_next && np.playing_next.song;
+  $("#nextLine").hidden = !(nx && nx.title);
+  if (nx) { $("#nextTitle").textContent = nx.title || ""; $("#nextArtist").textContent = nx.artist || ""; }
+  const n = np.listeners ? np.listeners.current : 0;
+  $("#listeners").textContent = n === 1 ? "1 persona escuchando" : `${n} personas escuchando`;
+  prog = { el: np.now_playing?.elapsed || 0, du: np.now_playing?.duration || 0, at: Date.now() };
+  tick();
+  updateShowNow();
+  if ($("#history")) renderHistory();
+  if ("mediaSession" in navigator && "MediaMetadata" in window) {
+    navigator.mediaSession.metadata = new MediaMetadata({ title, artist, album: "Radio de León", artwork: s.art ? [{ src: s.art, sizes: "512x512" }] : [] });
+  }
+}
+function fmt(t) { t = Math.max(0, Math.floor(t)); return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, "0")}`; }
+function tick() {
+  if (!prog.du) { $$(".js-bar").forEach((b) => (b.style.width = "0")); return; }
+  const el = Math.min(prog.du, prog.el + (Date.now() - prog.at) / 1000);
+  $$(".js-bar").forEach((b) => (b.style.width = `${(el / prog.du) * 100}%`));
+  $$(".js-el").forEach((e) => (e.textContent = fmt(el)));
+  $$(".js-du").forEach((e) => (e.textContent = fmt(prog.du)));
+  if (el >= prog.du) refreshNP();
+}
+setInterval(tick, 1000);
+setInterval(refreshNP, 15000);
+refreshNP();
+
+function updateShowNow() {
+  const box = $("#showNow");
+  if (NP && NP.live && NP.live.is_live) { box.innerHTML = `En vivo<b>${esc(NP.live.streamer_name || "Programa en vivo")}</b>`; return; }
+  const s = HOME && HOME.shows.find((x) => isOnAir(x));
+  box.innerHTML = s ? `${esc(s.start_time)}–${esc(s.end_time)}<b>${esc(s.name)}</b>` : `Música las 24 horas<b>Radio de León</b>`;
+}
+function renderHistory() {
+  const h = (NP && NP.song_history) || [];
+  $("#history").innerHTML = h.length ? h.slice(0, 6).map((x) => `
+    <li>${imgOr(x.song.art)}<div class="s"><span class="t">${horaDe(x.played_at)}</span><b>${esc(x.song.title || x.song.text)}</b><small>${esc(x.song.artist)}</small></div></li>`).join("")
+    : `<li><div class="s"><small>Aún no hay historial.</small></div></li>`;
+}
+
+/* ---------- Redes ---------- */
+const ICONS = {
+  facebook: '<path d="M14 8h3V4h-3c-2.8 0-4 1.7-4 4.2V10H7v4h3v8h4v-8h3l1-4h-4V8.6c0-.4.3-.6.6-.6Z" fill="currentColor"/>',
+  instagram: '<rect x="3" y="3" width="18" height="18" rx="5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="17.5" cy="6.5" r="1.3" fill="currentColor"/>',
+  tiktok: '<path d="M15 3c.4 2.6 2 4.2 4.6 4.4v3.3c-1.7 0-3.2-.5-4.6-1.4V16a5.6 5.6 0 1 1-5.6-5.6c.3 0 .6 0 .9.1v3.4a2.3 2.3 0 1 0 1.5 2.1V3Z" fill="currentColor"/>',
+  youtube: '<rect x="2" y="5" width="20" height="14" rx="4" fill="currentColor"/><path d="M10 9v6l5-3z" fill="var(--surface)"/>',
+  whatsapp: '<path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm5.3 14.2c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .3-3.4-.7-2.9-1.2-4.7-4.1-4.9-4.3-.1-.2-1.2-1.6-1.2-3s.8-2.2 1-2.5c.3-.3.6-.4.8-.4h.6c.2 0 .4 0 .6.5l.9 2.1c.1.2.1.4 0 .5l-.3.5-.4.5c-.2.2-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.2 1 2.1 1.4 2.4 1.5.3.1.5.1.7-.1l.9-1.1c.2-.3.4-.2.7-.1l2 1c.3.1.5.2.5.3.1.2.1.7-.1 1.3Z" fill="currentColor"/>',
+};
+function socialUrl(k, v) {
+  if (!v) return "";
+  if (/^https?:\/\//.test(v)) return v;
+  const h = v.replace(/^@/, "");
+  return { facebook: `https://facebook.com/${h}`, instagram: `https://instagram.com/${h}`, tiktok: `https://www.tiktok.com/@${h}`, youtube: `https://youtube.com/@${h}`, whatsapp: `https://wa.me/${h.replace(/\D/g, "")}` }[k];
+}
+function renderSocials(st) {
+  $("#socials").innerHTML = ["whatsapp", "facebook", "instagram", "tiktok", "youtube"].filter((k) => st[k]).map((k) =>
+    `<a href="${esc(socialUrl(k, st[k]))}" target="_blank" rel="noopener" aria-label="${k}"><svg viewBox="0 0 24 24">${ICONS[k]}</svg></a>`).join("");
+}
+
+/* ---------- Vistas ---------- */
+function newsCard(p) {
+  return `<a class="card${p.image ? "" : " noimg"}" href="/nota/${esc(p.slug)}" data-link>
+    ${p.image ? `<img src="${esc(p.image)}" alt="" loading="lazy">` : ""}
+    <span class="arrow" aria-hidden="true">↗</span>
+    <div class="card-in"><span class="cat">${esc(p.category || "Noticias")}</span><h3>${esc(p.title)}</h3></div>
+  </a>`;
+}
+function slotRow(s) {
+  const now = isOnAir(s);
+  return `<div class="slot${now ? " now" : ""}"><span class="hrs">${esc(s.start_time)}–${esc(s.end_time)}</span>${imgOr(s.image)}
+    <div><b>${esc(s.name)}</b><small>${s.host ? "Con " + esc(s.host) : ""}</small></div>${now ? '<span class="pill on"><span class="dot"></span>Al aire</span>' : "<span></span>"}</div>`;
+}
+function eventCard(e, past) {
+  const [y, m, d] = e.date.split("-").map(Number);
+  return `<article class="event${past ? " past" : ""}">
+    <div class="date"><b>${d}</b><span>${MESES[m - 1]} ${y}</span></div>
+    <div class="info"><b>${esc(e.title)}</b><small>${[e.time, e.place].filter(Boolean).map(esc).join(" · ")}</small>
+      ${e.description ? `<p>${esc(e.description)}</p>` : ""}
+      ${e.link ? `<p><a href="${esc(e.link)}" target="_blank" rel="noopener">Más información ↗</a></p>` : ""}</div>
+    ${e.image ? `<img src="${esc(e.image)}" alt="" loading="lazy">` : ""}
+  </article>`;
+}
+function sponsorsBlock(list) {
+  if (!list.length) return "";
+  return `<section class="sec"><div class="sec-head"><h2>Patrocinadores</h2><span class="eyebrow">Gracias por hacerlo posible</span></div>
+    <div class="sponsors">${list.map((s) => {
+      const inner = s.logo ? `<img src="${esc(s.logo)}" alt="${esc(s.name)}">` : esc(s.name);
+      return s.url ? `<a class="sponsor" href="${esc(s.url)}" target="_blank" rel="noopener">${inner}</a>` : `<div class="sponsor">${inner}</div>`;
+    }).join("")}</div></section>`;
+}
+const footer = () => `<footer><span>© ${new Date().getFullYear()} Radio de León · León, Guanajuato</span><span>Hecho por Nano Studio</span></footer>`;
+
+const VIEWS = {
+  async home() {
+    const h = await loadHome();
+    const today = mxNow().day;
+    const todayShows = h.shows.filter((s) => showDays(s).includes(today));
+    return `
+      <section class="sec"><div class="sec-head"><h1>Lo último</h1><a href="/noticias" data-link>Ver todas las noticias →</a></div>
+        ${h.posts.length ? `<div class="mosaic">${h.posts.slice(0, 6).map(newsCard).join("")}</div>` : `<p class="empty">Pronto publicaremos noticias.</p>`}
+      </section>
+      ${todayShows.length ? `<section class="sec"><div class="sec-head"><h2>Hoy en la radio</h2><a href="/programas" data-link>Toda la programación →</a></div>
+        <div class="today">${todayShows.map(slotRow).join("")}</div></section>` : ""}
+      ${h.events.length ? `<section class="sec"><div class="sec-head"><h2>Próximos eventos</h2><a href="/eventos" data-link>Ver eventos →</a></div>
+        <div class="events">${h.events.map((e) => eventCard(e)).join("")}</div></section>` : ""}
+      <section class="sec"><div class="sec-head"><h2>Lo que sonó</h2><span class="eyebrow">Hora de León</span></div><ul class="history" id="history"></ul></section>
+      ${sponsorsBlock(h.sponsors)}
+      ${footer()}`;
+  },
+  async noticias() {
+    const posts = await api("/api/posts?limit=12");
+    return `<section class="sec"><div class="sec-head"><h1>Noticias</h1><span class="eyebrow">Radio de León</span></div>
+      ${posts.length ? `<div class="mosaic" id="newsList">${posts.map(newsCard).join("")}</div>` : `<p class="empty">Pronto publicaremos noticias.</p>`}
+      ${posts.length === 12 ? `<div class="more-wrap"><button class="btn ghost" id="moreBtn" data-offset="12">Cargar más noticias</button></div>` : ""}
+    </section>${footer()}`;
+  },
+  async nota(slug) {
+    const p = await api(`/api/posts/${encodeURIComponent(slug)}`);
+    document.title = `${p.title} · Radio de León`;
+    const url = location.href;
+    return `<article class="sec article">
+      <a class="back" href="/noticias" data-link>← Todas las noticias</a>
+      ${p.image ? `<div class="article-hero"><img src="${esc(p.image)}" alt=""></div>` : ""}
+      <div class="eyebrow" style="margin-top:22px">${esc(p.category || "Noticias")} · ${fechaLarga(p.published_at || p.created_at)}</div>
+      <h1>${esc(p.title)}</h1>
+      ${p.excerpt ? `<p class="lead">${esc(p.excerpt)}</p>` : ""}
+      <div class="prose">${md(p.body)}</div>
+      <div class="share">
+        <a class="btn wa" href="https://wa.me/?text=${encodeURIComponent(p.title + " " + url)}" target="_blank" rel="noopener">Compartir por WhatsApp</a>
+        <button class="btn ghost" data-copy="${esc(url)}">Copiar enlace</button>
+      </div>
+    </article>${footer()}`;
+  },
+  async programas() {
+    const h = await loadHome();
+    if (!h.shows.length) return `<section class="sec"><div class="sec-head"><h1>Programas</h1></div><p class="empty">Por ahora tenemos música las 24 horas. Pronto anunciaremos programas en vivo.</p></section>${footer()}`;
+    const today = mxNow().day;
+    return `<section class="sec"><div class="sec-head"><h1>Programas</h1><span class="eyebrow">Hora de León</span></div>
+      <div class="days" role="group" aria-label="Día">${[1, 2, 3, 4, 5, 6, 7].map((d) => `<button data-day="${d}" aria-pressed="${d === today}">${DIAS[d]}</button>`).join("")}</div>
+      <div class="today" id="daySlots"></div></section>
+      <section class="sec"><div class="sec-head"><h2>Locutores y programas</h2></div>
+      <div class="show-cards">${h.shows.map((s) => `<article class="show-card">${imgOr(s.image)}<div><b>${esc(s.name)}</b>
+        <div class="hrs">${showDays(s).map((d) => DIAS[d].slice(0, 3)).join(" · ")} · ${esc(s.start_time)}–${esc(s.end_time)}</div>
+        ${s.host ? `<p>Con ${esc(s.host)}</p>` : ""}${s.description ? `<p>${esc(s.description)}</p>` : ""}</div></article>`).join("")}</div></section>${footer()}`;
+  },
+  async eventos() {
+    const ev = await api("/api/events");
+    return `<section class="sec"><div class="sec-head"><h1>Eventos</h1><span class="eyebrow">En León y alrededores</span></div>
+      ${ev.upcoming.length ? `<div class="events">${ev.upcoming.map((e) => eventCard(e)).join("")}</div>` : `<p class="empty">No hay eventos próximos por ahora.</p>`}</section>
+      ${ev.past.length ? `<section class="sec"><div class="sec-head"><h2>Eventos pasados</h2></div><div class="events">${ev.past.map((e) => eventCard(e, true)).join("")}</div></section>` : ""}${footer()}`;
+  },
+  async contacto() {
+    const h = await loadHome(), st = h.settings;
+    const wa = st.whatsapp ? socialUrl("whatsapp", st.whatsapp) : "";
+    return `<section class="sec"><div class="sec-head"><h1>Contacto</h1><span class="eyebrow">Escríbenos</span></div>
+      <div class="contact">
+        <div><p class="about">${esc(st.about)}</p></div>
+        <div style="display:grid;gap:14px">
+          ${wa ? `<div class="box"><h3 style="font-size:28px;text-transform:uppercase">WhatsApp</h3><p style="margin:0;color:var(--muted)">Saludos, complacencias e ideas para la radio.</p>
+            <a class="btn wa" href="${esc(wa)}?text=${encodeURIComponent("Hola Radio de León, ")}" target="_blank" rel="noopener">Escribir por WhatsApp</a>
+            <code style="font-family:var(--font-mono);font-size:13px">+${esc(st.whatsapp.replace(/\D/g, ""))}</code></div>` : ""}
+          ${st.email ? `<div class="box"><h3 style="font-size:28px;text-transform:uppercase">Correo</h3><div class="copy"><code>${esc(st.email)}</code><button class="btn" data-copy="${esc(st.email)}">Copiar</button></div></div>` : ""}
+          <div class="box"><h3 style="font-size:28px;text-transform:uppercase">Escúchanos en tu app</h3><p style="margin:0;color:var(--muted)">Pega este enlace en VLC o en tu app de radio favorita.</p>
+            <div class="copy"><code>${esc(STREAM)}</code><button class="btn" data-copy="${esc(STREAM)}">Copiar</button></div></div>
+        </div>
+      </div></section>${sponsorsBlock(h.sponsors)}${footer()}`;
+  },
+};
+
+/* ---------- Navegación sin cortar la música ---------- */
+async function route() {
+  const path = location.pathname.replace(/\/+$/, "") || "/";
+  let view = "home", arg = null;
+  const m = path.match(/^\/nota\/([a-z0-9-]+)$/);
+  if (m) { view = "nota"; arg = m[1]; }
+  else if (path !== "/") view = path.slice(1);
+  if (!VIEWS[view]) view = "home";
+  $$(".nav a").forEach((a) => a.toggleAttribute("aria-current", (a.getAttribute("href") === path) || (view === "nota" && a.getAttribute("href") === "/noticias")));
+  $$(".nav a[aria-current]").forEach((a) => a.setAttribute("aria-current", "page"));
+  if (view !== "nota") document.title = view === "home" ? "Radio de León" : `${view[0].toUpperCase() + view.slice(1)} · Radio de León`;
+  const el = $("#view");
+  try { el.innerHTML = await VIEWS[view](arg); }
+  catch (e) { el.innerHTML = `<section class="sec"><p class="empty">${esc(e.message)}. <a href="/" data-link>Volver al inicio</a></p></section>`; }
+  if ($("#history") && NP) renderHistory();
+  if (view === "programas" && HOME && HOME.shows.length) renderDay(mxNow().day);
+}
+function renderDay(d) {
+  $$(".days button").forEach((b) => b.setAttribute("aria-pressed", String(+b.dataset.day === d)));
+  const list = HOME.shows.filter((s) => showDays(s).includes(d)).sort((a, b) => toMin(a.start_time) - toMin(b.start_time));
+  $("#daySlots").innerHTML = list.length ? list.map(slotRow).join("") : `<p class="empty">Ese día suena nuestra música las 24 horas.</p>`;
+}
+document.addEventListener("click", async (e) => {
+  const a = e.target.closest("a[data-link]");
+  if (a && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
+    e.preventDefault();
+    closeMenu();
+    if (a.getAttribute("href") !== location.pathname) history.pushState(null, "", a.getAttribute("href"));
+    await route();
+    scrollTo(0, 0);
+    return;
+  }
+  const day = e.target.closest("[data-day]");
+  if (day) return renderDay(+day.dataset.day);
+  const cp = e.target.closest("[data-copy]");
+  if (cp) {
+    try { await navigator.clipboard.writeText(cp.dataset.copy); toast("Copiado"); } catch (er) { toast("No se pudo copiar"); }
+    return;
+  }
+  if (e.target.id === "moreBtn") {
+    const off = +e.target.dataset.offset;
+    const more = await api(`/api/posts?limit=12&offset=${off}`);
+    $("#newsList").insertAdjacentHTML("beforeend", more.map(newsCard).join(""));
+    if (more.length < 12) e.target.remove(); else e.target.dataset.offset = off + 12;
+  }
+});
+addEventListener("popstate", route);
+
+/* ---------- Menú en celular ---------- */
+function openMenu() { $("#side").classList.add("open"); $("#scrim").hidden = false; $("#menuBtn").setAttribute("aria-expanded", "true"); }
+function closeMenu() { $("#side").classList.remove("open"); $("#scrim").hidden = true; $("#menuBtn").setAttribute("aria-expanded", "false"); }
+$("#menuBtn").addEventListener("click", openMenu);
+$("#scrim").addEventListener("click", closeMenu);
+addEventListener("keydown", (e) => e.key === "Escape" && closeMenu());
+
+loadHome().catch(() => {});
+route();
+</script>
+</body>
+</html>
