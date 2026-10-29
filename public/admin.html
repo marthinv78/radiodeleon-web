@@ -5,25 +5,21 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex">
 <title>Panel · Radio de León</title>
-<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.png" type="image/png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
 /* Panel de Radio de León — mismo sistema de color que la página,
    tratamiento utilitario: listas claras y formularios grandes
    para usarse cómodo desde el celular. */
 :root{
-  --bg:#16110f; --surface:#211915; --surface-2:#2c221d; --ink:#f4e9e2; --muted:#b9a59a; --line:#3b2e27;
-  --cantera:#e39a86; --cantera-deep:#c4705b; --suela:#c98a45; --ok:#5fb87a; --danger:#ff6a5c; --on-accent:#1a100c;
-  --font-display:"Big Shoulders Display","Arial Narrow",Impact,sans-serif;
+  --bg:#020b22; --surface:#00143b; --surface-2:#0a2257; --ink:#eef3ff; --muted:#93a6cf; --line:#173061;
+  --cantera:#e2b66d; --cantera-deep:#f0c983; --suela:#3a9bff; --ok:#4cd38a; --danger:#ff6b6b; --on-accent:#04122f;
+  --font-display:"Montserrat","Arial Black",Arial,sans-serif;
   --font-ui:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   --font-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
   color-scheme:dark;
-}
-@media (prefers-color-scheme: light){
-  :root{--bg:#f6efea;--surface:#fffaf7;--surface-2:#f0e4dc;--ink:#24180f;--muted:#6f5a4d;--line:#e2d2c7;
-    --cantera:#b8563f;--cantera-deep:#93402c;--suela:#9a6024;--ok:#2f7d48;--danger:#c0352a;--on-accent:#fff;color-scheme:light}
 }
 *{box-sizing:border-box}
 [hidden]{display:none!important}
@@ -38,7 +34,7 @@ h1,h2{font-family:var(--font-display);text-transform:uppercase;line-height:1;mar
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid transparent;border-radius:10px;padding:10px 16px;cursor:pointer;font-weight:600;font-size:15px;text-decoration:none;background:var(--surface-2);color:var(--ink);white-space:nowrap}
 .btn:hover{border-color:var(--line)}
 .btn.primary{background:var(--cantera);color:var(--on-accent)}
-.btn.primary:hover{background:var(--cantera-deep);color:#fff}
+.btn.primary:hover{background:var(--cantera-deep)}
 .btn.danger{background:none;color:var(--danger);border-color:color-mix(in srgb,var(--danger) 40%,transparent)}
 .btn.small{padding:6px 12px;font-size:14px}
 .btn:disabled{opacity:.6;cursor:wait}
@@ -46,14 +42,14 @@ h1,h2{font-family:var(--font-display);text-transform:uppercase;line-height:1;mar
 /* Entrada */
 .login{min-height:100vh;display:grid;place-items:center;padding:24px}
 .login form{width:100%;max-width:380px;display:grid;gap:16px;background:var(--surface);padding:28px;border-radius:16px;border:1px solid var(--line)}
-.login h1{font-size:40px}
+.login h1{font-size:30px}
 .mark{width:44px;height:44px}
 
 /* Barra superior */
 .top{position:sticky;top:0;z-index:10;background:var(--surface);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top,0px)}
 .top .wrap{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:60px}
 .top-brand{display:flex;align-items:center;gap:10px}
-.top-brand b{font-family:var(--font-display);font-size:24px;text-transform:uppercase}
+.top-brand b{font-family:var(--font-display);font-size:19px;text-transform:uppercase}
 .top-actions{display:flex;gap:8px}
 .tabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;border-top:1px solid var(--line)}
 .tabs::-webkit-scrollbar{display:none}
@@ -62,7 +58,7 @@ h1,h2{font-family:var(--font-display);text-transform:uppercase;line-height:1;mar
 
 main{padding-block:24px 80px}
 .head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;flex-wrap:wrap}
-.head h1{font-size:40px}
+.head h1{font-size:30px}
 
 /* Lista */
 .list{display:grid;gap:8px}
@@ -109,15 +105,12 @@ textarea.big{min-height:320px;font-family:var(--font-mono);font-size:14px;line-h
 </head>
 <body>
 
-<svg width="0" height="0" style="position:absolute" aria-hidden="true">
-  <symbol id="mark" viewBox="0 0 40 40"><path d="M6 36V20a14 14 0 0 1 28 0v16h-6V20a8 8 0 0 0-16 0v16Z" fill="var(--cantera)"/><circle cx="20" cy="22" r="2.6" fill="var(--suela)"/></symbol>
-</svg>
 
 <!-- Entrada -->
 <div class="login" id="loginView" hidden>
   <form id="loginForm">
-    <svg class="mark"><use href="#mark"/></svg>
-    <div><span class="eyebrow">Radio de León</span><h1>Panel</h1></div>
+    <img src="/brand/logo-h.webp" alt="Radio de León" style="width:100%;height:auto;border-radius:10px">
+    <h1>Panel</h1>
     <div class="field"><label for="pw">Contraseña</label><input type="password" id="pw" autocomplete="current-password" required></div>
     <p class="err" id="loginErr" hidden></p>
     <button class="btn primary" id="loginBtn">Entrar</button>
@@ -128,7 +121,7 @@ textarea.big{min-height:320px;font-family:var(--font-mono);font-size:14px;line-h
 <div id="appView" hidden>
   <header class="top">
     <div class="wrap">
-      <div class="top-brand"><svg class="mark" style="width:30px;height:30px"><use href="#mark"/></svg><b>Panel</b></div>
+      <div class="top-brand"><img src="/brand/logo-sq.webp" alt="" style="width:36px;height:36px;border-radius:8px"><b>Panel</b></div>
       <div class="top-actions">
         <a class="btn small" href="/" target="_blank" rel="noopener">Ver página</a>
         <button class="btn small" id="logoutBtn">Salir</button>

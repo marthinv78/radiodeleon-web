@@ -123,7 +123,7 @@ Abre http://localhost:8787 (los datos de prueba no afectan la página real).
 ```
 public/index.html   página pública (reproductor, noticias, programas, eventos, contacto)
 public/admin.html   panel de administración
-public/og.png       imagen al compartir la página
+public/og.jpg       imagen al compartir la página
 src/worker.js       servidor: API, sesión del panel, fotos y vista previa para WhatsApp
 schema.sql          estructura de la base de datos y notas iniciales
 wrangler.toml       configuración de Cloudflare
