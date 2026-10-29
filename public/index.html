@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Radio de León</title>
 <meta name="description" content="Radio de León: tu música, tus recuerdos. La radio por internet de León, Guanajuato, con música las 24 horas, noticias, programas y eventos.">
-<meta name="theme-color" content="#00143b">
+<meta name="theme-color" content="#ffffff">
 <meta property="og:title" content="Radio de León">
 <meta property="og:description" content="Tu música, tus recuerdos. La radio por internet de León, Guanajuato, en vivo las 24 horas.">
 <meta property="og:type" content="website">
@@ -20,19 +20,20 @@
 <style>
 /* =============================================================
    RADIO DE LEÓN — página pública
-   Identidad del logo: azul marino de fondo, azul eléctrico de las
-   ondas de sonido y dorado del león y del micrófono. Tema oscuro
-   siempre, igual que el logo. Barra lateral fija con el reproductor;
+   Fondo blanco con paneles grises; el logo (azul marino) va como
+   placa. Azul del logo para enlaces y etiquetas, dorado del león
+   para el botón de play. Barra lateral fija con el reproductor;
    la música no se corta al cambiar de sección.
    ============================================================= */
 :root{
-  --bg:#020b22; --surface:#00143b; --surface-2:#0a2257; --ink:#eef3ff; --muted:#93a6cf; --line:#173061;
-  --cantera:#e2b66d; --cantera-deep:#f0c983; --suela:#3a9bff; --live:#ff4757; --on-accent:#04122f;
+  --bg:#ffffff; --surface:#f2f3f5; --surface-2:#e5e7eb; --ink:#0e1729; --muted:#5a6375; --line:#dcdfe5;
+  --cantera:#1b5fd4; --cantera-deep:#154aa6; --suela:#8f6411; --live:#e5303f; --on-accent:#ffffff;
+  --gold:#ddb05c; --gold-deep:#c99a3f; --navy:#00143b;
   --font-display:"Montserrat","Arial Black",Arial,sans-serif;
   --font-body:"Source Sans 3","Segoe UI",Roboto,sans-serif;
   --font-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
   --radius:14px; --side:320px; --dock:72px;
-  color-scheme:dark;
+  color-scheme:light;
 }
 *{box-sizing:border-box}
 [hidden]{display:none!important}
@@ -55,9 +56,9 @@ main{margin-left:var(--side);min-height:100%;padding-bottom:40px}
 @media (max-width:979px){
   :root{--side:300px}
   main{margin-left:0;padding-bottom:calc(var(--dock) + 40px + env(safe-area-inset-bottom,0px))}
-  .side{transform:translateX(-100%);transition:transform .25s ease;box-shadow:20px 0 40px rgba(0,0,0,.35)}
-  .side.open{transform:none}
-  .scrim{display:block;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:25}
+  .side{transform:translateX(-100%);transition:transform .25s ease}
+  .side.open{transform:none;box-shadow:20px 0 40px rgba(14,23,41,.18)}
+  .scrim{display:block;position:fixed;inset:0;background:rgba(14,23,41,.35);z-index:25}
   .mtop{display:flex;position:sticky;top:0;z-index:20;align-items:center;justify-content:space-between;gap:12px;background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:calc(10px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px))}
   .dock{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surface);border-top:1px solid var(--line);align-items:center;gap:12px;min-height:var(--dock);padding:8px max(16px,env(safe-area-inset-right,0px)) calc(8px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
 }
@@ -65,7 +66,7 @@ main{margin-left:var(--side);min-height:100%;padding-bottom:40px}
 
 /* ---------- Barra lateral ---------- */
 .side-in{padding:22px 22px 18px;display:flex;flex-direction:column;gap:22px;flex:1}
-.logo{display:block;margin:-6px -8px 0;border-radius:12px;overflow:hidden}
+.logo{display:block;border-radius:12px;overflow:hidden;background:var(--navy)}
 .logo img{width:100%;height:auto}
 .logo-m img{height:46px;width:auto;border-radius:6px}
 .brand{display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--ink)}
@@ -90,8 +91,8 @@ main{margin-left:var(--side);min-height:100%;padding-bottom:40px}
 .show-now{font-family:var(--font-mono);font-size:12px;color:var(--suela)}
 .show-now b{display:block;line-height:1.1;margin-top:4px;font-family:var(--font-display);font-size:17px;color:var(--ink);text-transform:uppercase;letter-spacing:.01em}
 .player{display:flex;gap:14px;align-items:center}
-.play{width:64px;height:64px;border-radius:50%;border:0;background:var(--cantera);color:var(--on-accent);cursor:pointer;display:grid;place-items:center;flex:none;transition:transform .15s,background .2s}
-.play:hover{background:var(--cantera-deep)}
+.play{width:64px;height:64px;border-radius:50%;border:0;background:var(--gold);color:var(--navy);cursor:pointer;display:grid;place-items:center;flex:none;transition:transform .15s,background .2s}
+.play:hover{background:var(--gold-deep)}
 .play:active{transform:scale(.95)}
 .play svg{width:26px;height:26px}
 .track{min-width:0}
@@ -103,13 +104,13 @@ main{margin-left:var(--side);min-height:100%;padding-bottom:40px}
 .art-ph{aspect-ratio:1;width:96px;flex:none;border-radius:12px;overflow:hidden;background:var(--surface-2)}
 .art-ph img{width:100%;height:100%;object-fit:cover}
 .bar{height:4px;background:var(--surface-2);border-radius:99px;overflow:hidden}
-.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--suela),var(--cantera));transition:width 1s linear}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--cantera),var(--gold));transition:width 1s linear}
 .times{display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:11px;color:var(--muted);margin-top:4px;font-variant-numeric:tabular-nums}
 .next{display:flex;gap:10px;align-items:center;font-size:13px;color:var(--muted);min-width:0}
 .next b{color:var(--ink);font-weight:600}
 .next span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .vol{display:flex;align-items:center;gap:10px}
-.vol input{flex:1;accent-color:var(--cantera)}
+.vol input{flex:1;accent-color:var(--gold-deep)}
 .side-foot{margin-top:auto;display:flex;flex-direction:column;gap:12px}
 .socials{display:flex;gap:8px;flex-wrap:wrap}
 .socials a{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);display:grid;place-items:center;color:var(--ink)}
@@ -119,6 +120,7 @@ main{margin-left:var(--side);min-height:100%;padding-bottom:40px}
 /* Móvil */
 .menu-btn{background:none;border:1px solid var(--line);border-radius:999px;padding:8px 14px;cursor:pointer;font-family:var(--font-mono);font-size:12px;display:flex;gap:8px;align-items:center}
 .mtop .brand b{font-size:19px}
+.card{box-shadow:0 1px 2px rgba(14,23,41,.06)}
 .mtop .brand svg{width:32px;height:32px}
 .dock .play{width:48px;height:48px}
 .dock .play svg{width:20px;height:20px}
