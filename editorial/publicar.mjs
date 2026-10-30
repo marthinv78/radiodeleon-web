@@ -55,9 +55,9 @@ function parse(text) {
     if (item && list) { meta[list].push(item[1].trim()); continue; }
     const kv = line.match(/^([a-z_]+):\s*(.*)$/);
     if (!kv) continue;
-    list = kv[2] ? null : kv[1];
-    if (list) meta[list] = meta[list] || [];
-    else meta[kv[1]] = kv[2].trim();
+    // Solo "fuentes" es una lista; cualquier otro campo vacío (por ejemplo "foto:") queda vacío
+    list = kv[1] === "fuentes" ? "fuentes" : null;
+    if (!list) meta[kv[1]] = kv[2].trim();
   }
   return { meta, body: m[2].trim() };
 }
