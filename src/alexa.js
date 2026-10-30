@@ -16,17 +16,25 @@ const TOKEN = "radiodeleon-en-vivo";
 
 export async function alexa(req, env) {
   const raw = new Uint8Array(await req.arrayBuffer());
-  if (!(await fromAmazon(req, raw))) return new Response("Firma no válida", { status: 400 });
+  const why = await fromAmazon(req, raw);
+  if (why) return reject(`Firma no válida (${why})`);
   let body;
-  try { body = JSON.parse(new TextDecoder().decode(raw)); } catch { return new Response("Datos inválidos", { status: 400 }); }
+  try { body = JSON.parse(new TextDecoder().decode(raw)); } catch { return reject("Datos inválidos"); }
 
   // La petición debe ser reciente (Amazon pide máximo 150 segundos)
-  if (Math.abs(Date.now() - Date.parse(body.request && body.request.timestamp)) > 150e3) return new Response("Petición vencida", { status: 400 });
+  if (Math.abs(Date.now() - Date.parse(body.request && body.request.timestamp)) > 150e3) return reject("Petición vencida");
   const appId = (body.session && body.session.application && body.session.application.applicationId)
     || (body.context && body.context.System && body.context.System.application && body.context.System.application.applicationId);
-  if (env.ALEXA_SKILL_ID && appId !== env.ALEXA_SKILL_ID) return new Response("Skill no reconocida", { status: 400 });
+  if (env.ALEXA_SKILL_ID && appId !== env.ALEXA_SKILL_ID) return reject(`Skill no reconocida: ${appId}`);
+  console.log("Alexa:", body.request && body.request.type, body.request && body.request.intent && body.request.intent.name);
 
   return Response.json(await answer(body.request || {}));
+}
+
+// El motivo queda en el registro de Cloudflare (Workers → radiodeleon-web → Logs)
+function reject(msg) {
+  console.warn("Alexa rechazada:", msg);
+  return new Response(msg, { status: 400 });
 }
 
 async function answer(r) {
@@ -112,27 +120,39 @@ async function nowPlaying() {
 // ---------------------------------------------------------------
 const certs = new Map();
 
+// Devuelve "" si la petición la firmó Amazon, o el motivo si no
 async function fromAmazon(req, raw) {
   const certUrl = req.headers.get("SignatureCertChainUrl") || "";
   const sig = req.headers.get("Signature-256") || "";
-  if (!certUrl || !sig || !validCertUrl(certUrl)) return false;
+  if (!certUrl || !sig) return "faltan encabezados";
+  if (!validCertUrl(certUrl)) return `certificado en lugar no permitido: ${certUrl}`;
   try {
     let key = certs.get(certUrl);
     if (!key) {
       const pem = await (await fetch(certUrl)).text();
       const leaf = pemToDer(pem);
-      if (!leaf) return false;
+      if (!leaf) return "no se pudo leer el certificado";
       const { notBefore, notAfter, spki } = parseCert(leaf);
       const now = Date.now();
-      if (now < notBefore || now > notAfter) return false;
+      if (now < notBefore || now > notAfter) return "certificado vencido";
       // El certificado debe ser el de Amazon para Alexa
-      if (!new TextDecoder("latin1").decode(leaf).includes("echo-api.amazon.com")) return false;
+      if (!hasText(leaf, "echo-api.amazon.com")) return "el certificado no es de Alexa";
       key = { key: await crypto.subtle.importKey("spki", spki, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, false, ["verify"]), notAfter };
       certs.set(certUrl, key);
     }
-    if (Date.now() > key.notAfter) { certs.delete(certUrl); return false; }
-    return await crypto.subtle.verify("RSASSA-PKCS1-v1_5", key.key, b64(sig), raw);
-  } catch { return false; }
+    if (Date.now() > key.notAfter) { certs.delete(certUrl); return "certificado vencido"; }
+    return (await crypto.subtle.verify("RSASSA-PKCS1-v1_5", key.key, b64(sig), raw)) ? "" : "la firma no coincide";
+  } catch (e) { return `error al revisar: ${e.message}`; }
+}
+
+// Busca un texto simple (ASCII) dentro de los bytes del certificado
+function hasText(bytes, text) {
+  const t = [...text].map((c) => c.charCodeAt(0));
+  outer: for (let i = 0; i <= bytes.length - t.length; i++) {
+    for (let k = 0; k < t.length; k++) if (bytes[i + k] !== t[k]) continue outer;
+    return true;
+  }
+  return false;
 }
 
 function validCertUrl(u) {
