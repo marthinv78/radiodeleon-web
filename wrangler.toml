@@ -9,8 +9,10 @@ directory = "./public"
 binding = "ASSETS"
 run_worker_first = true
 
-# Dirección pública de la página
+# Dirección pública de la página. La dirección vieja y www redirigen a radiodeleon.com (ver src/worker.js)
 routes = [
+  { pattern = "radiodeleon.com", custom_domain = true },
+  { pattern = "www.radiodeleon.com", custom_domain = true },
   { pattern = "radiodeleon.nanostudio.com.mx", custom_domain = true }
 ]
 

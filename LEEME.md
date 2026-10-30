@@ -1,7 +1,7 @@
 # Radio de León — página web con panel de administración
 
-- **Página pública:** https://radiodeleon.nanostudio.com.mx
-- **Panel para publicar:** https://radiodeleon.nanostudio.com.mx/admin
+- **Página pública:** https://radiodeleon.com
+- **Panel para publicar:** https://radiodeleon.com/admin
 
 Todo corre en Cloudflare con el plan gratuito:
 
@@ -50,7 +50,7 @@ npm run db:init
 ```
 npm run deploy
 ```
-Esto también crea la dirección `radiodeleon.nanostudio.com.mx` en tu Cloudflare.
+Esto también crea la dirección `radiodeleon.com` en tu Cloudflare. La dirección vieja `radiodeleon.nanostudio.com.mx` y `www.radiodeleon.com` redirigen solas a `radiodeleon.com`.
 
 **7. Poner la contraseña del panel**
 ```
@@ -63,7 +63,7 @@ npx wrangler secret put SESSION_SECRET
 ```
 Aquí escribe cualquier texto largo y al azar (40 letras y números o más). No tienes que recordarlo; sirve para firmar la sesión.
 
-Listo: entra a https://radiodeleon.nanostudio.com.mx/admin
+Listo: entra a https://radiodeleon.com/admin
 
 ---
 
@@ -142,7 +142,7 @@ Cada nota sale lista para buscadores y para compartir: título, resumen y foto e
 - `/rss.xml`: las últimas 30 notas, para lectores de noticias y herramientas que publican en redes.
 - `/robots.txt`: le dice a Google que no entre al panel.
 
-**Para que Google empiece a leer la página (una sola vez):** entra a https://search.google.com/search-console, agrega `radiodeleon.nanostudio.com.mx` y, en *Sitemaps*, escribe `sitemap.xml` y dale *Enviar*.
+**Para que Google empiece a leer la página (una sola vez):** entra a https://search.google.com/search-console, agrega `radiodeleon.com` y, en *Sitemaps*, escribe `sitemap.xml` y dale *Enviar*.
 
 ## Hacer cambios al diseño
 

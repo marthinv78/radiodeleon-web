@@ -6,7 +6,7 @@
 //
 // Necesita las variables:
 //   RDL_EDITOR_TOKEN   la llave del agente (el mismo valor que EDITOR_TOKEN en Cloudflare)
-//   RDL_URL            opcional; por defecto https://radiodeleon.nanostudio.com.mx
+//   RDL_URL            opcional; por defecto https://radiodeleon.com
 //
 // Formato de la nota (ver editorial/plantilla.md):
 //   ---
@@ -27,7 +27,7 @@
 
 import { readFile } from "node:fs/promises";
 
-const BASE = (process.env.RDL_URL || "https://radiodeleon.nanostudio.com.mx").replace(/\/+$/, "");
+const BASE = (process.env.RDL_URL || "https://radiodeleon.com").replace(/\/+$/, "");
 const TOKEN = process.env.RDL_EDITOR_TOKEN;
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const TYPES = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };

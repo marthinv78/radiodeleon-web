@@ -100,10 +100,17 @@ const json = (data, status = 200, headers = {}) =>
   });
 const bad = (msg, status = 400) => json({ error: msg }, status);
 
+// Dirección principal. Las otras redirigen aquí (las llamadas a /api/ y /b/ siguen funcionando en todas).
+const MAIN_HOST = "radiodeleon.com";
+const OLD_HOSTS = ["radiodeleon.nanostudio.com.mx", "www.radiodeleon.com"];
+
 export default {
   async fetch(req, env, ctx) {
     const url = new URL(req.url);
     const p = url.pathname;
+    if (OLD_HOSTS.includes(url.hostname) && ["GET", "HEAD"].includes(req.method) && !p.startsWith("/api/") && !p.startsWith("/b/")) {
+      return Response.redirect(`https://${MAIN_HOST}${p}${url.search}`, 301);
+    }
     try {
       if (p.startsWith("/api/admin/")) return await adminApi(req, env, url);
       if (p.startsWith("/b/")) return await bannerClick(env, url);
