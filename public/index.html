@@ -432,6 +432,7 @@ audio.addEventListener("error", () => {
   clearTimeout(retryT); retryT = setTimeout(() => wantPlaying && start(), 4000);
 });
 document.addEventListener("click", (e) => { if (e.target.closest(".js-play, .js-listen")) toggle(); });
+const LOGO_ART = [128, 256, 512].map((n) => ({ src: `${location.origin}/brand/cover-${n}.png`, sizes: `${n}x${n}`, type: "image/png" }));
 if ("mediaSession" in navigator) {
   navigator.mediaSession.setActionHandler("play", start);
   navigator.mediaSession.setActionHandler("pause", stop);
@@ -472,7 +473,8 @@ function renderNP() {
   updateShowNow();
   if ($("#history")) renderHistory();
   if ("mediaSession" in navigator && "MediaMetadata" in window) {
-    navigator.mediaSession.metadata = new MediaMetadata({ title, artist, album: "Radio de León", artwork: s.art ? [{ src: s.art, sizes: "512x512" }] : [] });
+    // En el coche y la pantalla de bloqueo siempre sale el logo de Radio de León
+    navigator.mediaSession.metadata = new MediaMetadata({ title, artist, album: "Radio de León", artwork: LOGO_ART });
   }
 }
 function fmt(t) { t = Math.max(0, Math.floor(t)); return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, "0")}`; }
