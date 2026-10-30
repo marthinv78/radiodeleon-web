@@ -90,20 +90,20 @@ async function ensureBanners(env) {
 }
 // Secciones del portal. La categoría de cada nota debe ser uno de estos nombres.
 const SECTIONS = [
-  { name: "Cine", group: "Cultura y espectáculos" },
-  { name: "Teatro", group: "Cultura y espectáculos" },
-  { name: "Espectáculos", group: "Cultura y espectáculos" },
-  { name: "Música", group: "Cultura y espectáculos" },
-  { name: "Cultura", group: "Cultura y espectáculos" },
-  { name: "Moda", group: "Estilo y bienestar" },
-  { name: "Mujer", group: "Estilo y bienestar" },
-  { name: "Psicología", group: "Estilo y bienestar" },
-  { name: "Historia", group: "León y su gente" },
-  { name: "León", group: "León y su gente" },
-  { name: "Fundaciones", group: "León y su gente" },
-  { name: "Comunidad", group: "León y su gente" },
-  { name: "La radio", group: "Radio de León" },
-  { name: "Programación", group: "Radio de León" },
+  { name: "Cine", group: "Cultura y espectáculos", desc: "Estrenos con criterio, clásicos, cine mexicano y festivales, contados desde León." },
+  { name: "Teatro", group: "Cultura y espectáculos", desc: "Cartelera, obras, compañías y la historia de los teatros de León y Guanajuato." },
+  { name: "Espectáculos", group: "Cultura y espectáculos", desc: "Conciertos, danza, ópera, la Feria de León, el Festival del Globo y el Cervantino." },
+  { name: "Música", group: "Cultura y espectáculos", desc: "Géneros, discos, artistas, historias detrás de las canciones y la música de León." },
+  { name: "Cultura", group: "Cultura y espectáculos", desc: "Libros, arte, museos y gastronomía con historia en León y el Bajío." },
+  { name: "Moda", group: "Estilo y bienestar", desc: "Tendencias explicadas, diseñadores mexicanos y la industria del calzado y la piel de León." },
+  { name: "Mujer", group: "Estilo y bienestar", desc: "Mujeres que hacen historia, salud, liderazgo y emprendimiento en Guanajuato." },
+  { name: "Psicología", group: "Estilo y bienestar", desc: "Bienestar emocional, relaciones, crianza y hábitos, con base en la ciencia." },
+  { name: "Historia", group: "León y su gente", desc: "Historia de México, del Bajío y de León, con efemérides e historias poco conocidas." },
+  { name: "León", group: "León y su gente", desc: "La ciudad: sus personajes, barrios, tradiciones, economía y gastronomía." },
+  { name: "Fundaciones", group: "León y su gente", desc: "Asociaciones civiles y causas de León y Guanajuato: qué hacen y cómo ayudar." },
+  { name: "Comunidad", group: "León y su gente", desc: "Iniciativas ciudadanas, colectivos y talento local de León." },
+  { name: "La radio", group: "Radio de León", desc: "Noticias y avisos de Radio de León, la radio por internet de León, Guanajuato." },
+  { name: "Programación", group: "Radio de León", desc: "Lo que suena en Radio de León: programas, horarios y especiales de temporada." },
 ].map((s) => ({ ...s, slug: slugify(s.name) }));
 // Secciones extra de una nota, sin repetir la principal
 const extraCats = (p) => String(p.extra_categories || "").split("|").filter((c) => c && c !== p.category);
@@ -155,14 +155,47 @@ export default {
 // ---------------------------------------------------------------
 const SITE_NAME = "Radio de León";
 const PAGE_TITLES = { "/noticias": "Noticias", "/programas": "Programas", "/eventos": "Eventos", "/contacto": "Contacto", "/privacidad": "Aviso de privacidad" };
+const PAGE_DESCS = {
+  "/noticias": "Noticias de cultura, espectáculos, música, cine, historia y comunidad de León, Guanajuato, en Radio de León.",
+  "/programas": "La programación de Radio de León: programas, locutores y horarios. Música las 24 horas desde León, Guanajuato.",
+  "/eventos": "Conciertos, teatro, festivales y exposiciones en León y Guanajuato: la agenda de Radio de León.",
+  "/contacto": "Escríbenos por WhatsApp o correo: saludos, complacencias, publicidad y músicos que quieren sonar en Radio de León.",
+  "/privacidad": "Aviso de privacidad de Radio de León: qué datos usamos y cómo ejercer tus derechos.",
+};
+// Ficha para Google: qué es Radio de León, su logo y sus redes
+function stationLd(url, st) {
+  const sameAs = ["facebook", "instagram", "tiktok", "youtube"].map((k) => {
+    const v = String(st[k] || "").trim();
+    if (!v) return null;
+    if (/^https?:\/\//.test(v)) return v;
+    const h = v.replace(/^@/, "");
+    return { facebook: `https://www.facebook.com/${h}`, instagram: `https://www.instagram.com/${h}`, tiktok: `https://www.tiktok.com/@${h}`, youtube: `https://www.youtube.com/@${h}` }[k];
+  }).filter(Boolean);
+  return [
+    { "@context": "https://schema.org", "@type": "WebSite", name: SITE_NAME, url: `${url.origin}/`, inLanguage: "es-MX" },
+    {
+      "@context": "https://schema.org", "@type": "RadioStation", "@id": `${url.origin}/#radio`,
+      name: SITE_NAME, slogan: "Tu música, tus recuerdos", url: `${url.origin}/`,
+      logo: `${url.origin}/apple-touch-icon.png`, image: `${url.origin}/og.jpg`,
+      description: "La radio por internet de León, Guanajuato, con música las 24 horas, noticias, programas y eventos.",
+      address: { "@type": "PostalAddress", addressLocality: "León", addressRegion: "Guanajuato", addressCountry: "MX" },
+      areaServed: "León, Guanajuato",
+      ...(st.email ? { email: st.email } : {}),
+      ...(sameAs.length ? { sameAs } : {}),
+    },
+  ];
+}
 
 async function servePage(req, env, url) {
   if (url.pathname === "/robots.txt") return robots(url);
   if (url.pathname === "/sitemap.xml") return sitemap(env, url);
   if (url.pathname === "/rss.xml") return rss(env, url);
 
-  const res = await env.ASSETS.fetch(req);
-  if (res.status !== 404) return res;
+  // La portada también pasa por aquí para llevar la ficha de Google
+  if (url.pathname !== "/") {
+    const res = await env.ASSETS.fetch(req);
+    if (res.status !== 404) return res;
+  }
 
   // Rutas de la página (/noticias, /nota/x, /programas…) → misma página
   const shell = await env.ASSETS.fetch(new Request(new URL("/", url), req));
@@ -177,8 +210,16 @@ async function servePage(req, env, url) {
     const sm = url.pathname.match(/^\/seccion\/([a-z0-9-]+)\/?$/);
     const sec = sm && SECTIONS.find((s) => s.slug === sm[1]);
     if (sm && !sec) return new Response(shell.body, { status: 404, headers: shell.headers });
-    const name = sec ? sec.name : PAGE_TITLES[url.pathname.replace(/\/+$/, "")];
-    if (name) rw = rw.on("title", { element(el) { el.setInnerContent(`${name} · ${SITE_NAME}`); } });
+    const path = url.pathname.replace(/\/+$/, "");
+    const name = sec ? sec.name : PAGE_TITLES[path];
+    const desc = sec ? `${sec.desc} En Radio de León.` : PAGE_DESCS[path];
+    if (name) rw = rw.on("title", { element(el) { el.setInnerContent(`${name} · ${SITE_NAME}`); } })
+      .on('meta[property="og:title"]', set(`${name} · ${SITE_NAME}`));
+    if (desc) rw = rw.on('meta[name="description"]', set(desc)).on('meta[property="og:description"]', set(desc));
+    if (!path) {
+      const ld = stationLd(url, await getSettings(env).catch(() => ({})));
+      rw = rw.on("head", { element(el) { el.append(`<script type="application/ld+json">${JSON.stringify(ld).replace(/</g, "\\u003c")}</script>`, { html: true }); } });
+    }
     return rw.transform(new Response(shell.body, { status: 200, headers: shell.headers }));
   }
 
@@ -224,7 +265,7 @@ async function servePage(req, env, url) {
     } })
     // El texto de la nota va ya escrito en la página para que Google lo lea sin esperar al JavaScript
     .on("#view", { element(el) { el.setInnerContent(articleHtml(post), { html: true }); } });
-  if (img) rw = rw.on('meta[property="og:image"]', set(img));
+  if (img) rw = rw.on('meta[property="og:image"]', set(img)).on('meta[property^="og:image:"]', { element(el) { el.remove(); } });
   return rw.transform(new Response(shell.body, { status: 200, headers: shell.headers }));
 }
 
@@ -260,7 +301,7 @@ async function eventPage(env, url, shell, id, canonical, set, link) {
       el.append(`<script type="application/ld+json">${JSON.stringify(ld).replace(/</g, "\\u003c")}</script>`, { html: true });
     } })
     .on("#view", { element(el) { el.setInnerContent(`<article class="sec article"><h1>${escHtml(e.title)}</h1><div class="prose">${md(e.description)}</div></article>`, { html: true }); } });
-  if (img) rw = rw.on('meta[property="og:image"]', set(img));
+  if (img) rw = rw.on('meta[property="og:image"]', set(img)).on('meta[property^="og:image:"]', { element(el) { el.remove(); } });
   return rw.transform(new Response(shell.body, { status: 200, headers: shell.headers }));
 }
 
