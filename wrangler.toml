@@ -29,6 +29,11 @@ database_id = "6f702dc0-2439-4307-87b4-9c13f194db13"
 binding = "IMAGES"
 id = "8db444228a804cbabc504db60ffa145a"
 
+# Número de la cuenta de Instagram de Radio de León (no es secreto).
+# La llave de la página (META_PAGE_TOKEN) y META_PAGE_ID van como secretos en Cloudflare.
+[vars]
+META_IG_ID = "17841461111534900"
+
 # La contraseña del panel NO va aquí. Se guarda como secreto:
 #   npx wrangler secret put ADMIN_PASSWORD
 #   npx wrangler secret put SESSION_SECRET
