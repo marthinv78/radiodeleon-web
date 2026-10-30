@@ -62,6 +62,20 @@ async function ensureEvents(env) {
   }
   eventsReady = true;
 }
+// Columnas de notas para saber si ya se publicaron en Facebook e Instagram
+let postsReady = false;
+async function ensurePosts(env) {
+  if (postsReady) return;
+  for (const sql of [
+    "ALTER TABLE posts ADD COLUMN social_fb TEXT",
+    "ALTER TABLE posts ADD COLUMN social_ig TEXT",
+    "ALTER TABLE posts ADD COLUMN social_error TEXT",
+  ]) {
+    try { await env.DB.prepare(sql).run(); }
+    catch (e) { if (!/duplicate column/i.test(String(e.message || e))) throw e; }
+  }
+  postsReady = true;
+}
 // Un evento sigue "próximo" hasta su último día
 const EVENT_END = "COALESCE(NULLIF(end_date, ''), date)";
 
@@ -352,6 +366,7 @@ async function publicApi(req, env, url) {
   let m = p.match(/^\/api\/posts\/([a-z0-9-]+)$/);
   if (m) {
     const post = await env.DB.prepare("SELECT * FROM posts WHERE slug = ? AND published = 1").bind(m[1]).first();
+    if (post) for (const k of ["social_fb", "social_ig", "social_error"]) delete post[k];
     return post ? json(post, 200, cache) : bad("Esa nota no existe o ya no está publicada.", 404);
   }
   if (p === "/api/shows") {
@@ -511,6 +526,13 @@ async function adminApi(req, env, url) {
     }
   }
 
+  // Facebook e Instagram: qué está conectado, y publicar una nota ya aprobada
+  if (p === "/social" && req.method === "GET") {
+    return json({ facebook: !!(env.META_PAGE_ID && env.META_PAGE_TOKEN), instagram: !!(env.META_PAGE_TOKEN && env.META_IG_ID) }, 200, headers);
+  }
+  const sm = p.match(/^\/posts\/(\d+)\/social$/);
+  if (sm && req.method === "POST") return await shareToSocial(env, Number(sm[1]), await req.json().catch(() => ({})), headers);
+
   const m = p.match(/^\/(posts|shows|events|sponsors|banners)(?:\/(\d+))?$/);
   if (!m) return bad("No encontrado", 404);
   const [, table, idStr] = m;
@@ -518,6 +540,7 @@ async function adminApi(req, env, url) {
   const id = idStr ? Number(idStr) : null;
   if (table === "banners") await ensureBanners(env);
   if (table === "events") await ensureEvents(env);
+  if (table === "posts") await ensurePosts(env);
 
   if (req.method === "GET" && !id) {
     const r = await env.DB.prepare(`SELECT * FROM ${table} ORDER BY ${def.order}`).all();
@@ -567,6 +590,66 @@ async function adminApi(req, env, url) {
     return r ? json(r, 200, headers) : bad("No encontrado", 404);
   }
   return bad("Método no permitido", 405);
+}
+
+// ---------------------------------------------------------------
+// Publicar en Facebook e Instagram (API de Meta)
+//   META_PAGE_ID     número de la página de Facebook
+//   META_PAGE_TOKEN  llave de la página (permanente), con permiso para publicar
+//   META_IG_ID       número de la cuenta de Instagram profesional ligada a la página (opcional)
+// ---------------------------------------------------------------
+const GRAPH = "https://graph.facebook.com/v23.0";
+async function graph(env, path, params) {
+  const res = await fetch(`${GRAPH}/${path}`, {
+    method: params ? "POST" : "GET",
+    headers: { authorization: `Bearer ${env.META_PAGE_TOKEN}`, ...(params ? { "content-type": "application/json" } : {}) },
+    body: params ? JSON.stringify(params) : undefined,
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || data.error) throw new Error((data.error && data.error.message) || `Meta respondió ${res.status}`);
+  return data;
+}
+const tag = (s) => "#" + String(s || "").replace(/[^\p{L}\p{N}]+/gu, "");
+function socialCaption(post, forInstagram) {
+  const tags = ["#RadioDeLeón", ...(post.category ? [tag(post.category)] : []), "#León", "#Guanajuato"].join(" ");
+  const more = forInstagram ? "Lee la nota completa en radiodeleon.com (enlace en nuestro perfil)." : "";
+  return [post.title, post.excerpt, more, tags].filter(Boolean).join("\n\n");
+}
+// Publica la nota en la página de Facebook (con enlace) y en Instagram (con la imagen que arma el panel).
+// Lo que ya se publicó no se repite.
+async function shareToSocial(env, id, body, headers) {
+  if (!env.META_PAGE_ID || !env.META_PAGE_TOKEN) return bad("Falta conectar Facebook e Instagram (ver LEEME, sección Redes sociales).");
+  await ensurePosts(env);
+  const post = await env.DB.prepare("SELECT * FROM posts WHERE id = ?").bind(id).first();
+  if (!post) return bad("No encontrado", 404);
+  if (!post.published) return bad("Publica la nota en el portal antes de mandarla a redes.");
+  const link = `https://${MAIN_HOST}/nota/${post.slug}`;
+  const errors = [];
+
+  if (!post.social_fb) {
+    try { post.social_fb = (await graph(env, `${env.META_PAGE_ID}/feed`, { message: socialCaption(post, false), link })).id; }
+    catch (e) { errors.push(`Facebook: ${e.message}`); }
+  }
+  const image = String(body.image || "");
+  if (env.META_IG_ID && !post.social_ig) {
+    if (!/^\/img\/[a-z0-9-]+\.jpg$/.test(image)) errors.push("Instagram: falta la imagen de la nota.");
+    else {
+      try {
+        const box = await graph(env, `${env.META_IG_ID}/media`, { image_url: `https://${MAIN_HOST}${image}`, caption: socialCaption(post, true) });
+        // Instagram tarda unos segundos en procesar la imagen
+        for (let i = 0; i < 10; i++) {
+          const st = await graph(env, `${box.id}?fields=status_code`);
+          if (st.status_code === "FINISHED") break;
+          if (st.status_code === "ERROR") throw new Error("no pudo procesar la imagen");
+          await new Promise((r) => setTimeout(r, 1500));
+        }
+        post.social_ig = (await graph(env, `${env.META_IG_ID}/media_publish`, { creation_id: box.id })).id;
+      } catch (e) { errors.push(`Instagram: ${e.message}`); }
+    }
+  }
+  await env.DB.prepare("UPDATE posts SET social_fb = ?, social_ig = ?, social_error = ? WHERE id = ?")
+    .bind(post.social_fb || null, post.social_ig || null, errors.join(" · ") || null, id).run();
+  return json({ facebook: !!post.social_fb, instagram: !!post.social_ig, errors }, errors.length && !post.social_fb && !post.social_ig ? 502 : 200, headers);
 }
 
 function validate(table, d) {

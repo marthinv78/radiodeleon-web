@@ -150,7 +150,7 @@ const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 let toastT;
-function toast(m) { const t = $("#toast"); t.textContent = m; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => (t.hidden = true), 2800); }
+function toast(m) { const t = $("#toast"); t.textContent = m; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => (t.hidden = true), Math.max(2800, m.length * 70)); }
 
 async function api(path, opts = {}) {
   const r = await fetch("/api/admin" + path, { credentials: "same-origin", ...opts,
@@ -166,7 +166,7 @@ const DIAS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 const TYPES = {
   posts: {
     tab: "Noticias", one: "nota", nueva: "Nueva nota",
-    rowTitle: (r) => r.title, rowSub: (r) => `${r.published ? '<span class="tag ok">Publicada</span>' : '<span class="tag draft">Borrador</span>'}${esc(r.category || "")} · ${fecha(r.published_at || r.created_at)}`,
+    rowTitle: (r) => r.title, rowSub: (r) => `${r.published ? '<span class="tag ok">Publicada</span>' : '<span class="tag draft">Borrador</span>'}${r.social_fb ? '<span class="tag ok">Facebook</span>' : ""}${r.social_ig ? '<span class="tag ok">Instagram</span>' : ""}${esc(r.category || "")} · ${fecha(r.published_at || r.created_at)}`,
     rowImg: (r) => r.image,
     fields: [
       { k: "title", label: "Título", type: "text", required: true },
@@ -343,6 +343,7 @@ function formView(type, rec) {
       <h1 style="font-size:34px">${rec ? "Editar " + T.one : T.nueva}</h1>
       ${T.fields.map((f) => fieldHtml(f, rec)).join("")}
       <p class="err" id="formErr" hidden></p>
+      ${isPost ? `<div id="shareOpt"></div>` : ""}
       <div class="form-actions">
         <div>${rec ? `<button type="button" class="btn danger" id="delBtn">Borrar</button>` : ""}</div>
         <div>${hasDraft ? `<button type="submit" class="btn" data-publish="0">Guardar borrador</button><button type="submit" class="btn primary" data-publish="1">${rec && rec.published ? "Guardar cambios" : "Publicar"}</button>`
@@ -352,6 +353,11 @@ function formView(type, rec) {
   $("#backBtn").onclick = () => listView(type);
   const form = $("#form");
   bindSocial(type, rec, form);
+  if (isPost) socialStatus().then((st) => {
+    const done = rec && rec.social_fb && (rec.social_ig || !st.instagram);
+    if (st.facebook && !done && $("#shareOpt")) $("#shareOpt").innerHTML = `<label class="check"><input type="checkbox" id="shareSocial" checked>
+      Al publicar, mandarla también a Facebook${st.instagram ? " e Instagram" : ""}</label>`;
+  });
   let publishFlag = rec ? rec.published : 0;
   $$("[data-publish]", form).forEach((b) => b.addEventListener("click", () => (publishFlag = +b.dataset.publish)));
 
@@ -389,9 +395,11 @@ function formView(type, rec) {
     if (hasDraft) data.published = publishFlag;
     const btns = $$("button[type=submit]", form); btns.forEach((b) => (b.disabled = true));
     try {
-      await api(`/${type}${rec ? "/" + rec.id : ""}`, { method: rec ? "PUT" : "POST", body: JSON.stringify(data) });
+      const saved = await api(`/${type}${rec ? "/" + rec.id : ""}`, { method: rec ? "PUT" : "POST", body: JSON.stringify(data) });
       toast(hasDraft ? (publishFlag ? (isPost ? "Nota publicada" : "Evento publicado") : "Borrador guardado") : "Guardado");
+      const share = isPost && publishFlag && $("#shareSocial") && $("#shareSocial").checked;
       listView(type);
+      if (share) shareNote(saved);
     } catch (er) { err.textContent = er.message; err.hidden = false; btns.forEach((b) => (b.disabled = false)); }
   });
 }
@@ -494,12 +502,24 @@ function socialHtml(type, rec) {
       <button type="button" class="btn small" data-copytext>Copiar texto</button>
     </div>
     <div class="social-out" id="socialOut" hidden></div>
+    ${type === "posts" ? `<div class="social-status" id="socialStatus"></div>` : ""}
   </section>`;
 }
 
 function bindSocial(type, rec, form) {
   const box = $(".social");
   if (!box) return;
+  if (type === "posts") socialStatus().then((st) => {
+    const el = $("#socialStatus");
+    if (!el || !st.facebook) return;
+    const where = [rec.social_fb && "Facebook", rec.social_ig && "Instagram"].filter(Boolean);
+    const missing = !rec.social_fb || (st.instagram && !rec.social_ig);
+    el.innerHTML = `${where.length ? `<p class="help">Ya se publicó en ${where.join(" e ")}.</p>` : ""}
+      ${rec.social_error ? `<p class="err">Último intento: ${esc(rec.social_error)}</p>` : ""}
+      ${missing && rec.published ? `<button type="button" class="btn small primary" data-sharenow>Mandar a redes ahora</button>` : ""}`;
+    const b = $("[data-sharenow]", el);
+    if (b) b.onclick = async () => { b.disabled = true; await shareNote(rec); listView("posts"); };
+  });
   const read = () => {
     const d = { ...rec };
     for (const el of form.elements) if (el.name && el.type !== "checkbox") d[el.name] = el.value.trim();
@@ -528,6 +548,30 @@ function bindSocial(type, rec, form) {
   });
 }
 
+// Facebook e Instagram: qué está conectado en el servidor
+let SOCIAL_ON = null;
+async function socialStatus() {
+  if (!SOCIAL_ON) SOCIAL_ON = await api("/social").catch(() => ({}));
+  return SOCIAL_ON;
+}
+// Manda una nota publicada a Facebook (con enlace) y a Instagram (con su imagen vertical)
+async function shareNote(rec) {
+  const st = await socialStatus();
+  toast("Mandando la nota a redes…");
+  try {
+    let image = "";
+    if (st.instagram && !rec.social_ig) {
+      const blob = await socialImage("posts", rec, "post", "image/jpeg");
+      const r = await fetch("/api/admin/upload", { method: "POST", body: blob, headers: { "content-type": "image/jpeg" }, credentials: "same-origin" });
+      const up = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(up.error || "No se pudo subir la imagen para Instagram");
+      image = up.url;
+    }
+    const res = await api(`/posts/${rec.id}/social`, { method: "POST", body: JSON.stringify({ image }) });
+    const ok = [res.facebook && "Facebook", res.instagram && "Instagram"].filter(Boolean).join(" e ");
+    toast(res.errors.length ? `${ok ? `Publicada en ${ok}. ` : ""}${res.errors.join(" · ")}` : `Publicada en ${ok}`);
+  } catch (er) { toast(`No se pudo mandar a redes: ${er.message}`); }
+}
 const slugish = (s) => String(s || "radio").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40);
 const hashtag = (s) => String(s || "").replace(/[^\p{L}\p{N}]+/gu, "");
 function eventWhen(d) {
@@ -612,7 +656,7 @@ function drawLogo(ctx, logo, x, y, w, h) {
 }
 function spaced(ctx, px) { if ("letterSpacing" in ctx) ctx.letterSpacing = px; }
 
-async function socialImage(type, d, fmt) {
+async function socialImage(type, d, fmt, mime = "image/png") {
   const { w, h } = FORMATS[fmt];
   await Promise.all(["900 80px Montserrat", "600 30px 'JetBrains Mono'", "600 30px 'Source Sans 3'"].map((f) => document.fonts.load(f)));
   const [logo, photo] = await Promise.all([
@@ -716,7 +760,7 @@ async function socialImage(type, d, fmt) {
     ctx.font = `600 20px 'JetBrains Mono'`; ctx.fillStyle = "#ddb05c"; ctx.textAlign = "right";
     ctx.fillText("radiodeleon.com", box.x + box.w, footY + footH / 2 - 10); ctx.textAlign = "left";
   }
-  return new Promise((res) => c.toBlob(res, "image/png"));
+  return new Promise((res) => c.toBlob(res, mime, .92));
 }
 
 /* ---------- Ajustes ---------- */

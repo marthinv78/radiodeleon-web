@@ -134,6 +134,35 @@ npx wrangler secret put EDITOR_AUTOPUBLISH
 ```
 y escribe `1`. Para volver a revisarlas tú, bórralo con `npx wrangler secret delete EDITOR_AUTOPUBLISH`.
 
+## Publicar en Facebook e Instagram
+
+Cuando le das **Publicar** a una nota en `/admin`, la casilla **"Al publicar, mandarla también a Facebook e Instagram"** la manda sola:
+
+- **Facebook:** en tu página, con el título, el resumen y el enlace a la nota (la vista previa toma la foto de la nota).
+- **Instagram:** la imagen vertical de la marca (1080×1350) con el texto y los hashtags. Instagram no deja enlaces en las publicaciones, así que el texto invita a ir al enlace del perfil.
+
+Cada nota se manda una sola vez. En la lista de Noticias verás las etiquetas **Facebook** e **Instagram** cuando ya salió. Si algo falla, dentro de la nota aparece el motivo y un botón **Mandar a redes ahora** para reintentar.
+Las notas que el agente publique solo (con `EDITOR_AUTOPUBLISH`) **no** se mandan a redes: solo las que apruebas tú en el panel.
+
+**Conectarlo (una sola vez, desde la compu):**
+
+1. Tu Instagram debe ser **cuenta profesional** (de empresa o de creador) y estar **ligada a tu página de Facebook**. Se hace en Instagram: *Configuración → Tipo de cuenta y herramientas*, y en Facebook: *Configuración de la página → Cuentas vinculadas*.
+2. Entra a **developers.facebook.com**, crea una app de tipo **Empresa** (*Business*) y ponle de nombre "Radio de León".
+3. Abre el **Explorador de la API Graph** (*Herramientas → Graph API Explorer*), elige tu app y en **Permisos** agrega:
+   `pages_show_list`, `pages_read_engagement`, `pages_manage_posts`, `instagram_basic`, `instagram_content_publish`, `business_management`.
+   Dale **Generar token** y acepta con tu cuenta.
+4. Copia ese token y ábrelo en el **Depurador de tokens** (*Herramientas → Access Token Debugger*). Abajo, dale **Extender el token de acceso**: te da uno que dura 60 días.
+5. De regreso en el Explorador, pega el token largo y consulta `me/accounts`. Ahí aparece tu página con su `id` y su `access_token`. **Ese `access_token` de la página no caduca.**
+6. Consulta `ID-DE-TU-PAGINA?fields=instagram_business_account` para sacar el número de tu Instagram.
+7. En la app, cambia el modo de **Desarrollo** a **Publicado** (*Live*), para que todos vean las publicaciones. Meta te pide el enlace a una política de privacidad.
+8. Guarda los tres datos en Cloudflare:
+```
+npx wrangler secret put META_PAGE_ID
+npx wrangler secret put META_PAGE_TOKEN
+npx wrangler secret put META_IG_ID
+```
+Guarda también el token en Vaultwarden. Si un día cambias la contraseña de Facebook, el token deja de servir y hay que repetir los pasos 3 a 5.
+
 ## Google y redes sociales
 
 Cada nota sale lista para buscadores y para compartir: título, resumen y foto en la vista previa de WhatsApp, Facebook y X; el texto ya escrito en la página; y los datos de artículo que lee Google (fecha, sección, foto y quién publica).
