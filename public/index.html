@@ -232,19 +232,25 @@ main{margin-left:var(--side);min-height:100%;padding-bottom:40px}
 
 /* Eventos */
 .events{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
-.event{display:grid;grid-template-columns:78px minmax(0,1fr);background:var(--surface);border-radius:var(--radius);overflow:hidden;min-width:0}
+.event{display:grid;grid-template-columns:78px minmax(0,1fr);grid-template-rows:auto 1fr;background:var(--surface);border-radius:var(--radius);overflow:hidden;min-width:0;text-decoration:none;color:inherit;transition:transform .2s,box-shadow .2s}
+a.event:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(14,23,41,.10)}
+.event-img{grid-column:1/-1;aspect-ratio:16/9;overflow:hidden;background:
+  repeating-linear-gradient(135deg,transparent 0 22px,color-mix(in srgb,var(--suela) 12%,transparent) 22px 23px),var(--surface-2)}
+.event-img img{width:100%;height:100%;object-fit:cover;display:block}
 .event .date{background:var(--cantera);color:var(--on-accent);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px 6px;text-align:center}
 .event .date b{font-family:var(--font-display);font-size:38px;font-weight:900;line-height:.9}
-.event .date span{font-family:var(--font-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase}
-.event .info{padding:14px 16px;min-width:0}
-.event .info b{display:block;font-family:var(--font-display);font-size:19px;font-weight:800;text-transform:uppercase;line-height:1}
-.event .info small{display:block;font-family:var(--font-mono);font-size:12px;color:var(--muted);margin-top:6px}
-.event .info p{margin:8px 0 0;font-size:15px}
-.event img{grid-column:1/-1;width:100%;aspect-ratio:16/9;object-fit:cover}
-.event.past{opacity:.6}
 .event .date b.range{font-size:22px;line-height:1.05}
-.event-desc ul{margin:8px 0 0;padding-left:20px;font-size:15px}
-.event-desc h3{font-size:15px;margin:12px 0 0}
+.event .date span{font-family:var(--font-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase}
+.event .info{display:flex;flex-direction:column;gap:6px;padding:14px 16px;min-width:0}
+.event .info b{font-family:var(--font-display);font-size:19px;font-weight:800;text-transform:uppercase;line-height:1.05;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.event .info small{font-family:var(--font-mono);font-size:12px;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.event-sum{margin:2px 0 0;font-size:15px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.event-more{margin-top:auto;padding-top:6px;font-family:var(--font-mono);font-size:13px;color:var(--cantera)}
+.event.past{opacity:.6}
+@media (prefers-reduced-motion: reduce){.event,a.event:hover{transition:none;transform:none}}
+/* Página de un evento */
+.event-meta{display:flex;flex-wrap:wrap;gap:8px 18px;margin:14px 0 22px;font-family:var(--font-mono);font-size:13px;color:var(--muted)}
+.event-meta span b{color:var(--ink);font-weight:600}
 
 /* Historial */
 .history{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}
@@ -537,22 +543,32 @@ function slotRow(s) {
   return `<div class="slot${now ? " now" : ""}"><span class="hrs">${esc(s.start_time)}–${esc(s.end_time)}</span>${imgOr(s.image)}
     <div><b>${esc(s.name)}</b><small>${s.host ? "Con " + esc(s.host) : ""}</small></div>${now ? '<span class="pill on"><span class="dot"></span>Al aire</span>' : "<span></span>"}</div>`;
 }
-function eventCard(e, past) {
+// Fecha para mostrar: "14", o "14–17" con "nov 2026"; si cambia de mes, "28 nov" con "– 2 dic 2026"
+function eventDate(e) {
   const [y, m, d] = e.date.split("-").map(Number);
-  // Varios días: "14–17 nov 2026" (o "28 nov – 2 dic 2026" si cambia de mes)
   let day = String(d), mon = `${MESES[m - 1]} ${y}`;
   if (e.end_date && e.end_date !== e.date) {
     const [y2, m2, d2] = e.end_date.split("-").map(Number);
     if (m2 === m && y2 === y) day = `${d}–${d2}`;
     else { day = `${d} ${MESES[m - 1]}`; mon = `– ${d2} ${MESES[m2 - 1]} ${y2}`; }
   }
-  return `<article class="event${past ? " past" : ""}">
+  return { day, mon };
+}
+// Primer párrafo de la descripción, sin formato, para el resumen de la tarjeta
+function plainSummary(text) {
+  const first = String(text || "").replace(/\r/g, "").split(/\n{2,}/).map((b) => b.trim())
+    .find((b) => b && !/^(\*?Foto:|Información:|## )/.test(b)) || "";
+  return first.replace(/\[([^\]]+)\]\([^)]+\)/g, "$1").replace(/[*_#]/g, "").replace(/\s+/g, " ");
+}
+function eventCard(e, past) {
+  const { day, mon } = eventDate(e);
+  return `<a class="event${past ? " past" : ""}" href="/evento/${e.id}" data-link>
+    <div class="event-img">${e.image ? `<img src="${esc(e.image)}" alt="" loading="lazy">` : ""}</div>
     <div class="date"><b${day.length > 2 ? ' class="range"' : ""}>${day}</b><span>${mon}</span></div>
     <div class="info"><b>${esc(e.title)}</b><small>${[e.time, e.place].filter(Boolean).map(esc).join(" · ")}</small>
-      ${e.description ? `<div class="event-desc">${md(e.description)}</div>` : ""}
-      ${e.link ? `<p><a href="${esc(e.link)}" target="_blank" rel="noopener">Más información ↗</a></p>` : ""}</div>
-    ${e.image ? `<img src="${esc(e.image)}" alt="" loading="lazy">` : ""}
-  </article>`;
+      ${e.description ? `<p class="event-sum">${esc(plainSummary(e.description))}</p>` : ""}
+      <span class="event-more">Ver evento →</span></div>
+  </a>`;
 }
 function sponsorsBlock(list) {
   if (!list.length) return "";
@@ -687,6 +703,25 @@ const VIEWS = {
       </div>
     </article>${footer()}`;
   },
+  async evento(id) {
+    const e = await api(`/api/events/${encodeURIComponent(id)}`);
+    document.title = `${e.title} · Radio de León`;
+    const { day, mon } = eventDate(e);
+    const url = location.href;
+    return `<article class="sec article">
+      <a class="back" href="/eventos" data-link>← Todos los eventos</a>
+      ${e.image ? `<div class="article-hero"><img src="${esc(e.image)}" alt=""></div>` : ""}
+      <div class="eyebrow" style="margin-top:22px">Evento · ${esc(day)} ${esc(mon)}</div>
+      <h1>${esc(e.title)}</h1>
+      <div class="event-meta">${e.time ? `<span><b>Horario:</b> ${esc(e.time)}</span>` : ""}${e.place ? `<span><b>Lugar:</b> ${esc(e.place)}</span>` : ""}</div>
+      ${e.description ? `<div class="prose">${md(e.description)}</div>` : ""}
+      <div class="share">
+        ${e.link ? `<a class="btn primary" href="${esc(e.link)}" target="_blank" rel="noopener">Sitio oficial y boletos ↗</a>` : ""}
+        <a class="btn wa" href="https://wa.me/?text=${encodeURIComponent(e.title + " " + url)}" target="_blank" rel="noopener">Compartir por WhatsApp</a>
+        <button class="btn ghost" data-copy="${esc(url)}">Copiar enlace</button>
+      </div>
+    </article>${footer()}`;
+  },
   async programas() {
     const h = await loadHome();
     if (!h.shows.length) return `<section class="sec"><div class="sec-head"><h1>Programas</h1></div><p class="empty">Por ahora tenemos música las 24 horas. Pronto anunciaremos programas en vivo.</p></section>${footer()}`;
@@ -729,13 +764,15 @@ async function route() {
   let view = "home", arg = null;
   const m = path.match(/^\/nota\/([a-z0-9-]+)$/);
   const sm = path.match(/^\/seccion\/([a-z0-9-]+)$/);
+  const em = path.match(/^\/evento\/(\d+)$/);
   if (m) { view = "nota"; arg = m[1]; }
+  else if (em) { view = "evento"; arg = em[1]; }
   else if (sm) { view = "seccion"; arg = sm[1]; }
   else if (path !== "/") view = path.slice(1);
   if (!VIEWS[view]) view = "home";
-  $$(".nav a").forEach((a) => a.toggleAttribute("aria-current", (a.getAttribute("href") === path) || ((view === "nota" || view === "seccion") && a.getAttribute("href") === "/noticias")));
+  $$(".nav a").forEach((a) => a.toggleAttribute("aria-current", (a.getAttribute("href") === path) || ((view === "nota" || view === "seccion") && a.getAttribute("href") === "/noticias") || (view === "evento" && a.getAttribute("href") === "/eventos")));
   $$(".nav a[aria-current]").forEach((a) => a.setAttribute("aria-current", "page"));
-  if (view !== "nota" && view !== "seccion") document.title = view === "home" ? "Radio de León" : `${view[0].toUpperCase() + view.slice(1)} · Radio de León`;
+  if (!["nota", "seccion", "evento"].includes(view)) document.title = view === "home" ? "Radio de León" : `${view[0].toUpperCase() + view.slice(1)} · Radio de León`;
   const el = $("#view");
   try { el.innerHTML = await VIEWS[view](arg); }
   catch (e) { el.innerHTML = `<section class="sec"><p class="empty">${esc(e.message)}. <a href="/" data-link>Volver al inicio</a></p></section>`; }

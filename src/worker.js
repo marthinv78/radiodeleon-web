@@ -137,7 +137,7 @@ async function servePage(req, env, url) {
   const canonical = url.origin + (url.pathname.replace(/\/+$/, "") || "/");
   const set = (attr) => ({ element(el) { el.setAttribute("content", attr); } });
   const link = { element(el) { el.setAttribute("href", canonical); } };
-  const m = url.pathname.match(/^\/nota\/([a-z0-9-]+)\/?$/);
+  const m = url.pathname.match(/^\/nota\/([a-z0-9-]+)\/?$/) || url.pathname.match(/^\/evento\/(\d+)\/?$/);
   if (!m) {
     let rw = new HTMLRewriter()
       .on('link[rel="canonical"]', link)
@@ -150,6 +150,7 @@ async function servePage(req, env, url) {
     return rw.transform(new Response(shell.body, { status: 200, headers: shell.headers }));
   }
 
+  if (m[0].startsWith("/evento/")) return eventPage(env, url, shell, Number(m[1]), canonical, set, link);
   const post = await env.DB.prepare(
     "SELECT * FROM posts WHERE slug = ? AND published = 1"
   ).bind(m[1]).first();
@@ -195,6 +196,42 @@ async function servePage(req, env, url) {
   return rw.transform(new Response(shell.body, { status: 200, headers: shell.headers }));
 }
 
+async function eventPage(env, url, shell, id, canonical, set, link) {
+  await ensureEvents(env);
+  const e = await env.DB.prepare("SELECT * FROM events WHERE id = ? AND published = 1").bind(id).first();
+  if (!e) return new Response(shell.body, { status: 404, headers: shell.headers });
+  const title = `${e.title} · ${SITE_NAME}`;
+  const desc = String(e.description || "").split(/\n{2,}/)[0].replace(/\[([^\]]+)\]\([^)]+\)/g, "$1").replace(/[*_#]/g, "").trim().slice(0, 200)
+    || `${e.title} en ${e.place || "León"}`;
+  const img = e.image ? new URL(e.image, url).href : null;
+  const ld = {
+    "@context": "https://schema.org",
+    "@type": "Event",
+    name: e.title,
+    startDate: e.date,
+    endDate: e.end_date || e.date,
+    eventStatus: "https://schema.org/EventScheduled",
+    eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+    location: { "@type": "Place", name: e.place || "León, Guanajuato", address: e.place || "León, Guanajuato, México" },
+    image: img ? [img] : undefined,
+    description: desc,
+    url: e.link || canonical,
+  };
+  let rw = new HTMLRewriter()
+    .on("title", { element(el) { el.setInnerContent(title); } })
+    .on('meta[name="description"]', set(desc))
+    .on('meta[property="og:title"]', set(title))
+    .on('meta[property="og:description"]', set(desc))
+    .on('meta[property="og:url"]', set(canonical))
+    .on('link[rel="canonical"]', link)
+    .on("head", { element(el) {
+      el.append(`<script type="application/ld+json">${JSON.stringify(ld).replace(/</g, "\\u003c")}</script>`, { html: true });
+    } })
+    .on("#view", { element(el) { el.setInnerContent(`<article class="sec article"><h1>${escHtml(e.title)}</h1><div class="prose">${md(e.description)}</div></article>`, { html: true }); } });
+  if (img) rw = rw.on('meta[property="og:image"]', set(img));
+  return rw.transform(new Response(shell.body, { status: 200, headers: shell.headers }));
+}
+
 function articleHtml(p) {
   const sec = SECTIONS.find((s) => s.name === p.category);
   const fecha = new Date(p.published_at || p.created_at).toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric", timeZone: "America/Mexico_City" });
@@ -224,6 +261,9 @@ async function sitemap(env, url) {
   const pages = ["/", ...Object.keys(PAGE_TITLES), ...secs].map((p) => `<url><loc>${url.origin}${p}</loc></url>`);
   const posts = r.results.map((p) =>
     `<url><loc>${url.origin}/nota/${p.slug}</loc><lastmod>${escHtml(p.updated_at || p.published_at || p.created_at)}</lastmod></url>`);
+  await ensureEvents(env);
+  const ev = await env.DB.prepare(`SELECT id, updated_at FROM events WHERE published = 1 AND ${EVENT_END} >= ?`).bind(mexicoToday()).all();
+  posts.push(...ev.results.map((e) => `<url><loc>${url.origin}/evento/${e.id}</loc><lastmod>${escHtml(e.updated_at)}</lastmod></url>`));
   const body = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${[...pages, ...posts].join("\n")}\n</urlset>\n`;
   return new Response(body, { headers: { "content-type": "application/xml; charset=utf-8", "cache-control": "public, max-age=600" } });
 }
@@ -269,7 +309,12 @@ async function publicApi(req, env, url) {
   const cache = { "cache-control": "public, max-age=30" };
   const today = mexicoToday();
 
-  if (p === "/api/home" || p === "/api/events") await ensureEvents(env);
+  if (p === "/api/home" || p.startsWith("/api/events")) await ensureEvents(env);
+  const em = p.match(/^\/api\/events\/(\d+)$/);
+  if (em) {
+    const ev = await env.DB.prepare("SELECT * FROM events WHERE id = ? AND published = 1").bind(Number(em[1])).first();
+    return ev ? json(ev, 200, cache) : bad("Ese evento no existe o ya no está publicado.", 404);
+  }
   if (p === "/api/home") {
     const [posts, shows, events, sponsors, settings] = await Promise.all([
       listPosts(env, 7, 0),
