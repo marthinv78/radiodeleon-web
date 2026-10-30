@@ -144,24 +144,23 @@ Cuando le das **Publicar** a una nota en `/admin`, la casilla **"Al publicar, ma
 Cada nota se manda una sola vez. En la lista de Noticias verás las etiquetas **Facebook** e **Instagram** cuando ya salió. Si algo falla, dentro de la nota aparece el motivo y un botón **Mandar a redes ahora** para reintentar.
 Las notas que el agente publique solo (con `EDITOR_AUTOPUBLISH`) **no** se mandan a redes: solo las que apruebas tú en el panel.
 
-**Conectarlo (una sola vez, desde la compu):**
+**Cómo está conectado** (ya quedó hecho el 30 de octubre de 2026):
 
-1. Tu Instagram debe ser **cuenta profesional** (de empresa o de creador) y estar **ligada a tu página de Facebook**. Se hace en Instagram: *Configuración → Tipo de cuenta y herramientas*, y en Facebook: *Configuración de la página → Cuentas vinculadas*.
-2. Entra a **developers.facebook.com**, crea una app de tipo **Empresa** (*Business*) y ponle de nombre "Radio de León".
-3. Abre el **Explorador de la API Graph** (*Herramientas → Graph API Explorer*), elige tu app y en **Permisos** agrega:
-   `pages_show_list`, `pages_read_engagement`, `pages_manage_posts`, `instagram_basic`, `instagram_content_publish`, `business_management`.
-   Dale **Generar token** y acepta con tu cuenta.
-4. Copia ese token y ábrelo en el **Depurador de tokens** (*Herramientas → Access Token Debugger*). Abajo, dale **Extender el token de acceso**: te da uno que dura 60 días.
-5. De regreso en el Explorador, pega el token largo y consulta `me/accounts`. Ahí aparece tu página con su `id` y su `access_token`. **Ese `access_token` de la página no caduca.**
-6. Consulta `ID-DE-TU-PAGINA?fields=instagram_business_account` para sacar el número de tu Instagram.
-7. En la app, cambia el modo de **Desarrollo** a **Publicado** (*Live*), para que todos vean las publicaciones. Meta te pide el enlace a una política de privacidad.
-8. Guarda los tres datos en Cloudflare:
+- **Instagram** `radiodeleon` es cuenta profesional de empresa, ligada a la página **Radio de León** dentro del portfolio comercial **Radio de León**.
+- **App de Meta:** "Radio de León" (ID `1449993797089805`), publicada, con los casos de uso *Administrar todos los aspectos de tu página* y *Administrar mensajes y contenido en Instagram*. Política de privacidad: `https://radiodeleon.com/privacidad`.
+- **Usuario del sistema** `PublicadorRDL` en el portfolio (business.facebook.com/settings → Usuarios del sistema), con acceso total a la página, al Instagram y a la app. Su token **nunca caduca**.
+- **En Cloudflare** (radiodeleon-web → Configuración → Variables y secretos): `META_PAGE_ID` y `META_PAGE_TOKEN` como **Secreto**. `META_IG_ID` está en `wrangler.toml`.
+
+**Si hay que cambiar la llave** (porque se filtró o dejó de funcionar):
+
+1. En business.facebook.com/settings → **Usuarios del sistema** → `PublicadorRDL` → **Revocar tokens**.
+2. **Generar token** → app *Radio de León* → caducidad **Nunca** → permisos `pages_show_list`, `pages_read_engagement`, `pages_manage_posts`, `instagram_basic`, `instagram_content_publish`, `business_management`.
+3. En developers.facebook.com → **Herramientas → Explorador de la API Graph**, pega ese token en *Token de acceso* y consulta:
 ```
-npx wrangler secret put META_PAGE_ID
-npx wrangler secret put META_PAGE_TOKEN
-npx wrangler secret put META_IG_ID
+1339591792579773?fields=name,access_token,instagram_business_account
 ```
-Guarda también el token en Vaultwarden. Si un día cambias la contraseña de Facebook, el token deja de servir y hay que repetir los pasos 3 a 5.
+4. Copia solo el texto de `access_token` (empieza con `EAA`, sin comillas) y ponlo en Cloudflare en `META_PAGE_TOKEN` con el lápiz, como **Secreto**.
+5. Guarda las dos llaves en Vaultwarden. Nunca las pegues en un chat ni en GitHub.
 
 ## Google y redes sociales
 
