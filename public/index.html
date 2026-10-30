@@ -310,7 +310,6 @@ footer{margin-top:64px;padding-top:20px;border-top:1px solid var(--line);color:v
         <span class="pill live" id="livePill" hidden><span class="dot"></span>En vivo</span>
       </div>
       <div class="nowrow">
-        <img class="art" id="sideArt" alt="" hidden>
         <div class="art-ph" id="sideArtPh"><img src="/brand/logo-sq.webp" alt=""></div>
         <div class="show-now" id="showNow">Música las 24 horas<b>Radio de León</b></div>
       </div>
@@ -337,7 +336,7 @@ footer{margin-top:64px;padding-top:20px;border-top:1px solid var(--line);color:v
 
 <div class="dock" role="region" aria-label="Reproductor">
   <button class="play js-play" aria-label="Escuchar en vivo"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="ico" d="M8 5v14l11-7z" fill="currentColor"/></svg></button>
-  <img id="dockArt" alt="" hidden><div class="ph" id="dockPh"></div>
+  <div class="ph" id="dockPh"></div>
   <div class="track"><b class="js-title">Radio de León</b><span class="js-artist">Toca play para escuchar</span></div>
 </div>
 
@@ -466,9 +465,7 @@ function renderNP() {
   const title = s.title || s.text || "Radio de León", artist = s.artist || "Música las 24 horas";
   $$(".js-title").forEach((e) => (e.textContent = title));
   $$(".js-artist").forEach((e) => (e.textContent = artist));
-  $("#sideArt").hidden = $("#dockArt").hidden = !s.art;
-  $("#sideArtPh").hidden = $("#dockPh").hidden = !!s.art;
-  if (s.art) { $("#sideArt").src = s.art; $("#dockArt").src = s.art; }
+  // No se muestran portadas de canciones: el reproductor siempre lleva el logo de Radio de León
   const nx = np.playing_next && np.playing_next.song;
   $("#nextLine").hidden = !(nx && nx.title);
   if (nx) { $("#nextTitle").textContent = nx.title || ""; $("#nextArtist").textContent = nx.artist || ""; }
@@ -505,7 +502,7 @@ function updateShowNow() {
 function renderHistory() {
   const h = (NP && NP.song_history) || [];
   $("#history").innerHTML = h.length ? h.slice(0, 6).map((x) => `
-    <li>${imgOr(x.song.art)}<div class="s"><span class="t">${horaDe(x.played_at)}</span><b>${esc(x.song.title || x.song.text)}</b><small>${esc(x.song.artist)}</small></div></li>`).join("")
+    <li>${imgOr("/brand/logo-sq.webp")}<div class="s"><span class="t">${horaDe(x.played_at)}</span><b>${esc(x.song.title || x.song.text)}</b><small>${esc(x.song.artist)}</small></div></li>`).join("")
     : `<li><div class="s"><small>Aún no hay historial.</small></div></li>`;
 }
 
