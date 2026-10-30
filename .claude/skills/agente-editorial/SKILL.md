@@ -51,6 +51,19 @@ El servidor la guarda **como borrador** y el dueño la revisa y publica desde `/
 
 Si el script marca un error (nota corta, sin fuentes, foto pesada), corrígelo y vuelve a correrlo.
 
+## Modo evento
+
+Cuando te pidan un evento ("busca el FIG 2026 y publícalo", "sube el concierto de X"), o cuando en la tanda diaria encuentres un evento próximo en León o Guanajuato que valga la pena y no esté en la lista de eventos:
+
+1. Revisa con `--listar` que el evento no esté ya en la sección Eventos.
+2. **Confirma en la fuente oficial** (sitio del organizador, de la sede o de la boletera): fechas exactas de inicio y fin, horario, sede, precios y cómo comprar. Si la fuente oficial todavía no publica las fechas, **no subas el evento** y reporta qué falta.
+3. Copia `editorial/plantilla-evento.md` a `editorial/notas/AAAA-MM-DD-evento-tema.md` y llénala:
+   - `fecha` es el primer día. `termina` es el último día, solo si dura varios.
+   - `enlace` es el sitio oficial.
+   - El texto es la descripción: corta, de 80 a 200 palabras, en 2 a 4 párrafos. Di qué es, lo destacado de este año, boletos y cómo llegar. Lo que no esté confirmado, no se escribe.
+4. Súbelo con `node editorial/publicar.mjs editorial/notas/…md`. Queda como borrador en la pestaña Eventos.
+5. Si es un evento grande (FIG, Feria de León, Cervantino, conciertos importantes), escribe **además una nota** en *Espectáculos* o *Cultura*: historia del evento, qué esperar y recomendaciones. Sigue los pasos normales y enlaza al sitio oficial en el texto. La nota atrae lectores desde Google y el evento queda en el calendario.
+
 ## 7. Reporta
 
 Al terminar, deja un resumen breve con, por cada nota: título, sección, de qué trata en una línea y las fuentes principales. Si algo no se pudo hacer, dilo.

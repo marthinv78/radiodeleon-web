@@ -39,6 +39,8 @@ CREATE TABLE IF NOT EXISTS events (
   image TEXT,
   description TEXT,
   link TEXT,
+  end_date TEXT,      -- último día si dura varios días; vacío = un solo día
+  published INTEGER NOT NULL DEFAULT 1,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
 );

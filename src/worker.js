@@ -19,7 +19,7 @@ const TABLES = {
     order: "sort, start_time",
   },
   events: {
-    fields: ["title", "date", "time", "place", "image", "description", "link"],
+    fields: ["title", "date", "end_date", "time", "place", "image", "description", "link", "published"],
     order: "date DESC, time",
   },
   sponsors: {
@@ -49,6 +49,22 @@ const BANNERS_SQL = `CREATE TABLE IF NOT EXISTS banners (
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
 )`;
+// Columnas nuevas de eventos (borrador y fecha de fin); se agregan solas la primera vez
+let eventsReady = false;
+async function ensureEvents(env) {
+  if (eventsReady) return;
+  for (const sql of [
+    "ALTER TABLE events ADD COLUMN published INTEGER NOT NULL DEFAULT 1",
+    "ALTER TABLE events ADD COLUMN end_date TEXT",
+  ]) {
+    try { await env.DB.prepare(sql).run(); }
+    catch (e) { if (!/duplicate column/i.test(String(e.message || e))) throw e; }
+  }
+  eventsReady = true;
+}
+// Un evento sigue "próximo" hasta su último día
+const EVENT_END = "COALESCE(NULLIF(end_date, ''), date)";
+
 // La tabla de banners se crea sola la primera vez que se usa
 let bannersReady = false;
 async function ensureBanners(env) {
@@ -253,11 +269,12 @@ async function publicApi(req, env, url) {
   const cache = { "cache-control": "public, max-age=30" };
   const today = mexicoToday();
 
+  if (p === "/api/home" || p === "/api/events") await ensureEvents(env);
   if (p === "/api/home") {
     const [posts, shows, events, sponsors, settings] = await Promise.all([
       listPosts(env, 7, 0),
       env.DB.prepare(`SELECT * FROM shows ORDER BY ${TABLES.shows.order}`).all(),
-      env.DB.prepare("SELECT * FROM events WHERE date >= ? ORDER BY date, time LIMIT 4").bind(today).all(),
+      env.DB.prepare(`SELECT * FROM events WHERE published = 1 AND ${EVENT_END} >= ? ORDER BY date, time LIMIT 4`).bind(today).all(),
       env.DB.prepare("SELECT * FROM sponsors WHERE active = 1 ORDER BY sort, id").all(),
       getSettings(env),
     ]);
@@ -291,8 +308,8 @@ async function publicApi(req, env, url) {
   }
   if (p === "/api/events") {
     const [up, past] = await Promise.all([
-      env.DB.prepare("SELECT * FROM events WHERE date >= ? ORDER BY date, time").bind(today).all(),
-      env.DB.prepare("SELECT * FROM events WHERE date < ? ORDER BY date DESC LIMIT 12").bind(today).all(),
+      env.DB.prepare(`SELECT * FROM events WHERE published = 1 AND ${EVENT_END} >= ? ORDER BY date, time`).bind(today).all(),
+      env.DB.prepare(`SELECT * FROM events WHERE published = 1 AND ${EVENT_END} < ? ORDER BY date DESC LIMIT 12`).bind(today).all(),
     ]);
     return json({ upcoming: up.results, past: past.results }, 200, cache);
   }
@@ -400,8 +417,8 @@ async function adminApi(req, env, url) {
   const admin = await isLoggedIn(req, env);
   const editor = !admin && (await isEditor(req, env));
   if (!admin && !editor) return bad("Tu sesión terminó. Vuelve a entrar.", 401);
-  if (editor && !(p === "/upload" || (p === "/posts" && ["GET", "POST"].includes(req.method)))) {
-    return bad("El agente editorial solo puede crear borradores y subir fotos.", 403);
+  if (editor && !(p === "/upload" || (["/posts", "/events"].includes(p) && ["GET", "POST"].includes(req.method)))) {
+    return bad("El agente editorial solo puede crear borradores de notas y eventos, y subir fotos.", 403);
   }
   if (p === "/me") return json({ ok: true }, 200, headers);
 
@@ -435,6 +452,7 @@ async function adminApi(req, env, url) {
   const def = TABLES[table];
   const id = idStr ? Number(idStr) : null;
   if (table === "banners") await ensureBanners(env);
+  if (table === "events") await ensureEvents(env);
 
   if (req.method === "GET" && !id) {
     const r = await env.DB.prepare(`SELECT * FROM ${table} ORDER BY ${def.order}`).all();
@@ -456,8 +474,10 @@ async function adminApi(req, env, url) {
     const err = validate(table, data);
     if (err) return bad(err);
 
-    if (table === "posts") {
+    if ((table === "posts" || table === "events") && ("published" in data || req.method === "POST")) {
       data.published = data.published && !(editor && env.EDITOR_AUTOPUBLISH !== "1") ? 1 : 0;
+    }
+    if (table === "posts") {
       if (!data.slug) data.slug = slugify(data.title);
       data.slug = await uniqueSlug(env, slugify(data.slug), id);
       if (data.published && !data.published_at) {
@@ -494,6 +514,8 @@ function validate(table, d) {
   if (table === "events") {
     if ("title" in d && !d.title) return "El evento necesita un título.";
     if ("date" in d && !/^\d{4}-\d{2}-\d{2}$/.test(d.date || "")) return "El evento necesita una fecha.";
+    if (d.end_date && !/^\d{4}-\d{2}-\d{2}$/.test(d.end_date)) return "La fecha de fin va en formato AAAA-MM-DD.";
+    if (d.end_date && d.date && d.end_date < d.date) return "La fecha de fin es antes de la de inicio.";
   }
   if (table === "sponsors" && "name" in d && !d.name) return "El patrocinador necesita un nombre.";
   if (table === "banners") {

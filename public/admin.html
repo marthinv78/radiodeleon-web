@@ -182,14 +182,15 @@ const TYPES = {
   },
   events: {
     tab: "Eventos", one: "evento", nueva: "Nuevo evento",
-    rowTitle: (r) => r.title, rowSub: (r) => `${fecha(r.date + "T12:00:00")}${r.place ? " · " + esc(r.place) : ""}`,
+    rowTitle: (r) => r.title, rowSub: (r) => `${r.published === 0 ? '<span class="tag draft">Borrador</span>' : ""}${fecha(r.date + "T12:00:00")}${r.end_date ? " → " + fecha(r.end_date + "T12:00:00") : ""}${r.place ? " · " + esc(r.place) : ""}`,
     rowImg: (r) => r.image,
     fields: [
       { k: "title", label: "Nombre del evento", type: "text", required: true },
-      { row: [{ k: "date", label: "Fecha", type: "date", required: true }, { k: "time", label: "Hora", type: "text", placeholder: "8:00 pm" }] },
+      { row: [{ k: "date", label: "Fecha", type: "date", required: true }, { k: "end_date", label: "Termina (si dura varios días)", type: "date" }] },
+      { k: "time", label: "Hora", type: "text", placeholder: "8:00 pm" },
       { k: "place", label: "Lugar", type: "text", placeholder: "Plaza Principal, León" },
       { k: "image", label: "Imagen o cartel", type: "image" },
-      { k: "description", label: "Descripción", type: "textarea" },
+      { k: "description", label: "Descripción", type: "textarea", help: "Deja una línea en blanco entre párrafos. Acepta **negritas** y enlaces [texto](https://…)." },
       { k: "link", label: "Enlace para más información (opcional)", type: "url", placeholder: "https://" },
     ],
   },
@@ -323,6 +324,7 @@ function flatFields(T) { return T.fields.flatMap((f) => f.row || [f]); }
 function formView(type, rec) {
   const T = TYPES[type], main = $("#main");
   const isPost = type === "posts";
+  const hasDraft = isPost || type === "events";
   main.innerHTML = `
     <div class="head"><button class="btn small" id="backBtn">← ${T.tab}</button></div>
     <form class="form" id="form" novalidate>
@@ -331,7 +333,7 @@ function formView(type, rec) {
       <p class="err" id="formErr" hidden></p>
       <div class="form-actions">
         <div>${rec ? `<button type="button" class="btn danger" id="delBtn">Borrar</button>` : ""}</div>
-        <div>${isPost ? `<button type="submit" class="btn" data-publish="0">Guardar borrador</button><button type="submit" class="btn primary" data-publish="1">${rec && rec.published ? "Guardar cambios" : "Publicar"}</button>`
+        <div>${hasDraft ? `<button type="submit" class="btn" data-publish="0">Guardar borrador</button><button type="submit" class="btn primary" data-publish="1">${rec && rec.published ? "Guardar cambios" : "Publicar"}</button>`
           : `<button type="submit" class="btn primary">Guardar</button>`}</div>
       </div>
     </form>`;
@@ -364,11 +366,11 @@ function formView(type, rec) {
       if (f.required && !data[f.k]) { err.textContent = `Falta llenar: ${f.label}.`; err.hidden = false; form.elements[f.k].focus(); return; }
     }
     if (type === "shows" && !data.days) { err.textContent = "Elige al menos un día."; err.hidden = false; return; }
-    if (isPost) data.published = publishFlag;
+    if (hasDraft) data.published = publishFlag;
     const btns = $$("button[type=submit]", form); btns.forEach((b) => (b.disabled = true));
     try {
       await api(`/${type}${rec ? "/" + rec.id : ""}`, { method: rec ? "PUT" : "POST", body: JSON.stringify(data) });
-      toast(isPost ? (publishFlag ? "Nota publicada" : "Borrador guardado") : "Guardado");
+      toast(hasDraft ? (publishFlag ? (isPost ? "Nota publicada" : "Evento publicado") : "Borrador guardado") : "Guardado");
       listView(type);
     } catch (er) { err.textContent = er.message; err.hidden = false; btns.forEach((b) => (b.disabled = false)); }
   });

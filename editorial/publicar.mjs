@@ -1,8 +1,8 @@
 // =============================================================
 // Radio de León — sube una nota del agente editorial como borrador
 //
-//   node editorial/publicar.mjs notas/mi-nota.md   sube la nota
-//   node editorial/publicar.mjs --listar           últimas 80 notas (para no repetir temas)
+//   node editorial/publicar.mjs notas/mi-nota.md   sube la nota (o el evento, si dice "tipo: evento")
+//   node editorial/publicar.mjs --listar           últimas 80 notas y los eventos (para no repetir)
 //
 // Necesita las variables:
 //   RDL_EDITOR_TOKEN   la llave del agente (el mismo valor que EDITOR_TOKEN en Cloudflare)
@@ -19,6 +19,10 @@
 //   - Nombre del medio | https://...
 //   ---
 //   Texto de la nota en el formato de la página (## subtítulos, **negritas**, listas con "- ").
+//
+// Formato de un evento (ver editorial/plantilla-evento.md): tipo: evento, titulo, fecha (AAAA-MM-DD),
+// termina (opcional), hora, lugar, enlace (sitio oficial), foto, foto_credito y fuentes;
+// el texto es la descripción.
 // =============================================================
 
 import { readFile } from "node:fs/promises";
@@ -74,12 +78,49 @@ if (process.argv[2] === "--listar") {
     const fecha = (p.published_at || p.created_at || "").slice(0, 10);
     console.log(`${fecha}  ${p.published ? "publicada" : "borrador "}  [${p.category || "-"}] ${p.title}`);
   }
+  const events = await api("/events");
+  if (events.length) console.log("\nEventos:");
+  for (const e of events.slice(0, 60)) {
+    console.log(`${e.date}${e.end_date ? " → " + e.end_date : ""}  ${e.published === 0 ? "borrador " : "publicado"}  ${e.title}`);
+  }
   process.exit(0);
 }
+
+const DATE = /^\d{4}-\d{2}-\d{2}$/;
+const sourcesLine = (fuentes) => fuentes.map((f) => {
+  const [name, link] = f.split("|").map((s) => s.trim());
+  return link ? `[${name}](${link})` : name;
+}).join(" · ");
 
 const file = process.argv[2];
 if (!file) die("Uso: node editorial/publicar.mjs <nota.md>  |  --listar");
 const { meta, body } = parse(await readFile(file, "utf8"));
+
+if (meta.tipo === "evento") {
+  for (const k of ["titulo", "fecha", "lugar"]) if (!meta[k]) die(`Falta "${k}" en el bloque de datos del evento.`);
+  if (!DATE.test(meta.fecha)) die("La fecha va en formato AAAA-MM-DD.");
+  if (meta.termina && !DATE.test(meta.termina)) die("La fecha de fin va en formato AAAA-MM-DD.");
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Mexico_City" }).format(new Date());
+  if ((meta.termina || meta.fecha) < today) die("Ese evento ya pasó.");
+  if (meta.fuentes.length === 0) die("Todo evento necesita al menos una fuente (de preferencia la oficial).");
+  if (meta.enlace && !/^https:\/\//.test(meta.enlace)) die("El enlace debe empezar con https://");
+  let desc = body;
+  if (meta.foto && meta.foto_credito) desc += `\n\n*Foto: ${meta.foto_credito}*`;
+  desc += `\n\nInformación: ${sourcesLine(meta.fuentes)}`;
+  const image = meta.foto ? await uploadPhoto(meta.foto) : null;
+  const ev = await api("/events", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      title: meta.titulo, date: meta.fecha, end_date: meta.termina || null, time: meta.hora || null,
+      place: meta.lugar, link: meta.enlace || null, description: desc, image, published: meta.publicar === "si",
+    }),
+  });
+  console.log(`✓ ${ev.published ? "Evento publicado" : "Evento guardado como borrador"}: ${ev.title}`);
+  console.log(`  Revisar en ${BASE}/admin (pestaña Eventos)`);
+  process.exit(0);
+}
+
 for (const k of ["titulo", "categoria", "resumen"]) if (!meta[k]) die(`Falta "${k}" en el bloque de datos.`);
 const sections = await (await fetch(`${BASE}/api/sections`)).json();
 if (!sections.some((s) => s.name === meta.categoria)) {
