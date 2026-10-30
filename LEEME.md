@@ -172,6 +172,12 @@ Cada nota sale lista para buscadores y para compartir: título, resumen y foto e
 
 **Para que Google empiece a leer la página (una sola vez):** entra a https://search.google.com/search-console, agrega `radiodeleon.com` y, en *Sitemaps*, escribe `sitemap.xml` y dale *Enviar*.
 
+## Kit para anunciantes
+
+- **Página:** https://radiodeleon.com/anunciate (enlace "Anúnciate" abajo en todo el sitio). Los paquetes y precios están en `ADV_PACKS`, en `public/index.html`.
+- **PDF de una hoja** para mandar por WhatsApp: `kit-anunciantes/Radio-de-Leon-anunciantes.pdf`. Se genera desde `kit-anunciantes/kit.html` con `node kit-anunciantes/generar-pdf.mjs` (necesita `npm i playwright`).
+- Si cambias un precio, cámbialo en los dos lugares y vuelve a generar el PDF.
+
 ## Hacer cambios al diseño
 
 Edita los archivos de `public/` (`index.html` es la página y `admin.html` el panel) y vuelve a correr:
