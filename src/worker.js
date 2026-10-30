@@ -57,34 +57,138 @@ export default {
 // ---------------------------------------------------------------
 // Páginas
 // ---------------------------------------------------------------
+const SITE_NAME = "Radio de León";
+const PAGE_TITLES = { "/noticias": "Noticias", "/programas": "Programas", "/eventos": "Eventos", "/contacto": "Contacto" };
+
 async function servePage(req, env, url) {
+  if (url.pathname === "/robots.txt") return robots(url);
+  if (url.pathname === "/sitemap.xml") return sitemap(env, url);
+  if (url.pathname === "/rss.xml") return rss(env, url);
+
   const res = await env.ASSETS.fetch(req);
   if (res.status !== 404) return res;
 
   // Rutas de la página (/noticias, /nota/x, /programas…) → misma página
   const shell = await env.ASSETS.fetch(new Request(new URL("/", url), req));
+  const canonical = url.origin + (url.pathname.replace(/\/+$/, "") || "/");
+  const set = (attr) => ({ element(el) { el.setAttribute("content", attr); } });
+  const link = { element(el) { el.setAttribute("href", canonical); } };
   const m = url.pathname.match(/^\/nota\/([a-z0-9-]+)\/?$/);
-  if (!m) return new Response(shell.body, { status: 200, headers: shell.headers });
+  if (!m) {
+    let rw = new HTMLRewriter()
+      .on('link[rel="canonical"]', link)
+      .on('meta[property="og:url"]', set(canonical));
+    const name = PAGE_TITLES[url.pathname.replace(/\/+$/, "")];
+    if (name) rw = rw.on("title", { element(el) { el.setInnerContent(`${name} · ${SITE_NAME}`); } });
+    return rw.transform(new Response(shell.body, { status: 200, headers: shell.headers }));
+  }
 
   const post = await env.DB.prepare(
-    "SELECT title, excerpt, image FROM posts WHERE slug = ? AND published = 1"
+    "SELECT * FROM posts WHERE slug = ? AND published = 1"
   ).bind(m[1]).first();
   if (!post) return new Response(shell.body, { status: 404, headers: shell.headers });
 
-  // Datos para la vista previa al compartir en WhatsApp/Facebook
-  const title = `${post.title} · Radio de León`;
-  const desc = post.excerpt || "Noticias de Radio de León";
+  // Vista previa al compartir (WhatsApp, Facebook, X) y datos para Google
+  const title = `${post.title} · ${SITE_NAME}`;
+  const desc = post.excerpt || `Noticias de ${SITE_NAME}`;
   const img = post.image ? new URL(post.image, url).href : null;
-  const set = (attr) => ({ element(el) { el.setAttribute("content", attr); } });
+  const published = post.published_at || post.created_at;
+  const ld = {
+    "@context": "https://schema.org",
+    "@type": "NewsArticle",
+    headline: post.title,
+    description: desc,
+    image: img ? [img] : undefined,
+    datePublished: published,
+    dateModified: post.updated_at || published,
+    articleSection: post.category || "Noticias",
+    inLanguage: "es-MX",
+    mainEntityOfPage: canonical,
+    author: { "@type": "Organization", name: SITE_NAME, url: url.origin },
+    publisher: {
+      "@type": "Organization", name: SITE_NAME,
+      logo: { "@type": "ImageObject", url: `${url.origin}/apple-touch-icon.png` },
+    },
+  };
   let rw = new HTMLRewriter()
     .on("title", { element(el) { el.setInnerContent(title); } })
     .on('meta[name="description"]', set(desc))
     .on('meta[property="og:title"]', set(title))
     .on('meta[property="og:description"]', set(desc))
     .on('meta[property="og:type"]', set("article"))
-    .on('meta[property="og:url"]', set(url.href));
+    .on('meta[property="og:url"]', set(canonical))
+    .on('link[rel="canonical"]', link)
+    .on("head", { element(el) {
+      el.append(`<meta property="article:published_time" content="${escHtml(published)}">`, { html: true });
+      el.append(`<script type="application/ld+json">${JSON.stringify(ld).replace(/</g, "\\u003c")}</script>`, { html: true });
+    } })
+    // El texto de la nota va ya escrito en la página para que Google lo lea sin esperar al JavaScript
+    .on("#view", { element(el) { el.setInnerContent(articleHtml(post), { html: true }); } });
   if (img) rw = rw.on('meta[property="og:image"]', set(img));
   return rw.transform(new Response(shell.body, { status: 200, headers: shell.headers }));
+}
+
+function articleHtml(p) {
+  const fecha = new Date(p.published_at || p.created_at).toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric", timeZone: "America/Mexico_City" });
+  return `<article class="sec article">
+      <a class="back" href="/noticias" data-link>← Todas las noticias</a>
+      ${p.image ? `<div class="article-hero"><img src="${escHtml(p.image)}" alt=""></div>` : ""}
+      <div class="eyebrow" style="margin-top:22px">${escHtml(p.category || "Noticias")} · ${fecha}</div>
+      <h1>${escHtml(p.title)}</h1>
+      ${p.excerpt ? `<p class="lead">${escHtml(p.excerpt)}</p>` : ""}
+      <div class="prose">${md(p.body)}</div>
+    </article>`;
+}
+
+// ---------------------------------------------------------------
+// Google y lectores de noticias: robots.txt, sitemap.xml, rss.xml
+// ---------------------------------------------------------------
+function robots(url) {
+  const body = `User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /api/admin/\n\nSitemap: ${url.origin}/sitemap.xml\n`;
+  return new Response(body, { headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "public, max-age=3600" } });
+}
+
+async function sitemap(env, url) {
+  const r = await env.DB.prepare(
+    `SELECT slug, updated_at, published_at, created_at FROM posts WHERE published = 1 ORDER BY ${TABLES.posts.order} LIMIT 5000`
+  ).all();
+  const pages = ["/", ...Object.keys(PAGE_TITLES)].map((p) => `<url><loc>${url.origin}${p}</loc></url>`);
+  const posts = r.results.map((p) =>
+    `<url><loc>${url.origin}/nota/${p.slug}</loc><lastmod>${escHtml(p.updated_at || p.published_at || p.created_at)}</lastmod></url>`);
+  const body = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${[...pages, ...posts].join("\n")}\n</urlset>\n`;
+  return new Response(body, { headers: { "content-type": "application/xml; charset=utf-8", "cache-control": "public, max-age=600" } });
+}
+
+async function rss(env, url) {
+  const r = await env.DB.prepare(
+    `SELECT * FROM posts WHERE published = 1 ORDER BY ${TABLES.posts.order} LIMIT 30`
+  ).all();
+  const items = r.results.map((p) => {
+    const link = `${url.origin}/nota/${p.slug}`;
+    const img = p.image ? new URL(p.image, url).href : null;
+    return `<item>
+  <title>${escHtml(p.title)}</title>
+  <link>${link}</link>
+  <guid isPermaLink="true">${link}</guid>
+  <pubDate>${new Date(p.published_at || p.created_at).toUTCString()}</pubDate>
+  <category>${escHtml(p.category || "Noticias")}</category>
+  <description>${escHtml(p.excerpt || "")}</description>
+  <content:encoded><![CDATA[${md(p.body).replace(/]]>/g, "]]]]><![CDATA[>")}]]></content:encoded>${img ? `\n  <media:content url="${escHtml(img)}" medium="image"/>` : ""}
+</item>`;
+  }).join("\n");
+  const body = `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:media="http://search.yahoo.com/mrss/" xmlns:atom="http://www.w3.org/2005/Atom">
+<channel>
+  <title>${SITE_NAME}</title>
+  <link>${url.origin}/</link>
+  <description>Noticias, cultura y espectáculos desde León, Guanajuato.</description>
+  <language>es-MX</language>
+  <atom:link href="${url.origin}/rss.xml" rel="self" type="application/rss+xml"/>
+${items}
+</channel>
+</rss>
+`;
+  return new Response(body, { headers: { "content-type": "application/rss+xml; charset=utf-8", "cache-control": "public, max-age=600" } });
 }
 
 // ---------------------------------------------------------------
@@ -310,6 +414,25 @@ function clean(v) {
   if (typeof v === "number") return v;
   if (v === null || v === undefined) return null;
   return String(v).trim();
+}
+function escHtml(s) {
+  return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+// Mismo formato sencillo que md() en public/index.html: párrafos, ## subtítulos,
+// **negritas**, *cursivas*, listas con "- " y enlaces
+function md(text) {
+  const inline = (s) => escHtml(s)
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*(.+?)\*/g, "<em>$1</em>")
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
+    .replace(/(^|[\s(])(https?:\/\/[^\s<)]+)/g, '$1<a href="$2" target="_blank" rel="noopener">$2</a>');
+  return String(text || "").replace(/\r/g, "").split(/\n{2,}/).map((b) => {
+    b = b.trim();
+    if (!b) return "";
+    if (b.startsWith("## ")) return `<h3>${inline(b.slice(3))}</h3>`;
+    if (b.split("\n").every((l) => /^[-*] /.test(l))) return `<ul>${b.split("\n").map((l) => `<li>${inline(l.slice(2))}</li>`).join("")}</ul>`;
+    return `<p>${b.split("\n").map(inline).join("<br>")}</p>`;
+  }).join("");
 }
 function clampInt(v, min, max, dflt) {
   const n = parseInt(v, 10);

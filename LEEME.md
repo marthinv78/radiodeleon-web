@@ -116,6 +116,16 @@ npx wrangler secret put EDITOR_AUTOPUBLISH
 ```
 y escribe `1`. Para volver a revisarlas tú, bórralo con `npx wrangler secret delete EDITOR_AUTOPUBLISH`.
 
+## Google y redes sociales
+
+Cada nota sale lista para buscadores y para compartir: título, resumen y foto en la vista previa de WhatsApp, Facebook y X; el texto ya escrito en la página; y los datos de artículo que lee Google (fecha, sección, foto y quién publica).
+
+- `/sitemap.xml`: la lista de todas las notas para Google. Se actualiza sola.
+- `/rss.xml`: las últimas 30 notas, para lectores de noticias y herramientas que publican en redes.
+- `/robots.txt`: le dice a Google que no entre al panel.
+
+**Para que Google empiece a leer la página (una sola vez):** entra a https://search.google.com/search-console, agrega `radiodeleon.nanostudio.com.mx` y, en *Sitemaps*, escribe `sitemap.xml` y dale *Enviar*.
+
 ## Hacer cambios al diseño
 
 Edita los archivos de `public/` (`index.html` es la página y `admin.html` el panel) y vuelve a correr:
