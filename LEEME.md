@@ -162,6 +162,31 @@ Las notas que el agente publique solo (con `EDITOR_AUTOPUBLISH`) **no** se manda
 4. Copia solo el texto de `access_token` (empieza con `EAA`, sin comillas) y ponlo en Cloudflare en `META_PAGE_TOKEN` con el lápiz, como **Secreto**.
 5. Guarda las dos llaves en Vaultwarden. Nunca las pegues en un chat ni en GitHub.
 
+## Alexa: "Alexa, abre Radio de León"
+
+La radio tiene su propia skill de Alexa, así que no depende de que TuneIn la encuentre. La parte que responde a Alexa ya vive en esta página (`src/alexa.js`, en `radiodeleon.com/alexa`): revisa que cada petición venga de Amazon y pone la señal en vivo.
+
+Lo que la gente puede decir:
+- *"Alexa, abre Radio de León"*: empieza a sonar.
+- *"Alexa, pregúntale a Radio de León qué canción es"*: dice la canción y el artista.
+- *"Alexa, pausa"*, *"Alexa, continúa"*, *"Alexa, detente"*.
+
+**Darla de alta (una sola vez):**
+
+1. Entra a **developer.amazon.com/alexa/console/ask** con **la misma cuenta de Amazon de tu Alexa**, así la pruebas en tu bocina desde el primer día.
+2. **Create Skill**: nombre `Radio de León`, idioma **Spanish (MX)**, tipo **Other → Custom**, alojamiento **Provision your own**, y **Start from scratch**.
+3. En **Build → Interaction Model → JSON Editor**, borra lo que hay, pega el contenido de `alexa/modelo-de-voz.json`, y dale **Save** y luego **Build skill**.
+4. En **Build → Interfaces**, prende **Audio Player** y dale **Save**.
+5. En **Build → Endpoint**, elige **HTTPS**. En *Default Region* escribe `https://radiodeleon.com/alexa` y elige *"My development endpoint has a certificate from a trusted certificate authority"*. Dale **Save**.
+6. Copia el **Skill ID** (empieza con `amzn1.ask.skill`) y guárdalo en Cloudflare, para que solo tu skill pueda usar esa dirección:
+```
+npx wrangler secret put ALEXA_SKILL_ID
+```
+7. En la pestaña **Test**, cambia *Off* a **Development**. Ya puedes decirle a tu bocina *"Alexa, abre Radio de León"*.
+8. Para que la use todo el mundo: en **Distribution** llena los textos que están en `alexa/skill.json` (nombre, resumen, descripción, frases de ejemplo y palabras clave), sube los íconos `public/brand/alexa-108.png` y `public/brand/alexa-512.png` y pon como política de privacidad `https://radiodeleon.com/privacidad`. Después, en **Certification**, dale **Submit for review**. Amazon tarda unos días en aprobarla.
+
+Si cambia la dirección de la señal, cámbiala arriba de `src/alexa.js` (y en `public/index.html`) y vuelve a publicar.
+
 ## Google y redes sociales
 
 Cada nota sale lista para buscadores y para compartir: título, resumen y foto en la vista previa de WhatsApp, Facebook y X; el texto ya escrito en la página; y los datos de artículo que lee Google (fecha, sección, foto y quién publica).

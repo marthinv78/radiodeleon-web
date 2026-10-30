@@ -1,0 +1,85 @@
+{
+  "manifest": {
+    "manifestVersion": "1.0",
+    "publishingInformation": {
+      "locales": {
+        "es-MX": {
+          "name": "Radio de León",
+          "summary": "Escucha en vivo Radio de León: tu música, tus recuerdos, desde León, Guanajuato.",
+          "description": "Radio de León es la estación en línea de León, Guanajuato. Música las 24 horas con los éxitos que marcaron tu vida.\n\nDi \"Alexa, abre Radio de León\" y empieza a sonar la señal en vivo. También puedes preguntar \"Alexa, pregúntale a Radio de León qué canción es\" para saber qué está sonando.\n\nMás en radiodeleon.com",
+          "examplePhrases": [
+            "Alexa, abre Radio de León",
+            "Alexa, pídele a Radio de León que ponga la radio",
+            "Alexa, pregúntale a Radio de León qué canción es"
+          ],
+          "keywords": [
+            "radio",
+            "León",
+            "Guanajuato",
+            "música",
+            "en vivo",
+            "recuerdos",
+            "baladas",
+            "Bajío"
+          ],
+          "smallIconUri": "https://radiodeleon.com/brand/alexa-108.png",
+          "largeIconUri": "https://radiodeleon.com/brand/alexa-512.png"
+        },
+        "es-US": {
+          "name": "Radio de León",
+          "summary": "Escucha en vivo Radio de León: tu música, tus recuerdos, desde León, Guanajuato.",
+          "description": "Radio de León es la estación en línea de León, Guanajuato. Música las 24 horas con los éxitos que marcaron tu vida.\n\nDi \"Alexa, abre Radio de León\" y empieza a sonar la señal en vivo. También puedes preguntar \"Alexa, pregúntale a Radio de León qué canción es\" para saber qué está sonando.\n\nMás en radiodeleon.com",
+          "examplePhrases": [
+            "Alexa, abre Radio de León",
+            "Alexa, pídele a Radio de León que ponga la radio",
+            "Alexa, pregúntale a Radio de León qué canción es"
+          ],
+          "keywords": [
+            "radio",
+            "León",
+            "Guanajuato",
+            "música",
+            "en vivo",
+            "recuerdos",
+            "baladas",
+            "Bajío"
+          ],
+          "smallIconUri": "https://radiodeleon.com/brand/alexa-108.png",
+          "largeIconUri": "https://radiodeleon.com/brand/alexa-512.png"
+        }
+      },
+      "isAvailableWorldwide": true,
+      "testingInstructions": "Diga: Alexa, abre Radio de León. Suena la transmisión en vivo. Para detener: Alexa, detente.",
+      "category": "MUSIC_AND_AUDIO",
+      "distributionCountries": []
+    },
+    "privacyAndCompliance": {
+      "allowsPurchases": false,
+      "usesPersonalInfo": false,
+      "isChildDirected": false,
+      "isExportCompliant": true,
+      "containsAds": false,
+      "locales": {
+        "es-MX": {
+          "privacyPolicyUrl": "https://radiodeleon.com/privacidad"
+        },
+        "es-US": {
+          "privacyPolicyUrl": "https://radiodeleon.com/privacidad"
+        }
+      }
+    },
+    "apis": {
+      "custom": {
+        "endpoint": {
+          "uri": "https://radiodeleon.com/alexa",
+          "sslCertificateType": "Trusted"
+        },
+        "interfaces": [
+          {
+            "type": "AUDIO_PLAYER"
+          }
+        ]
+      }
+    }
+  }
+}
