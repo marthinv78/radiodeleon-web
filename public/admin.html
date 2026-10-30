@@ -206,6 +206,35 @@ const TYPES = {
     ],
   },
 };
+const SLOTS = {
+  portada: "Portada: Inicio, debajo de “Lo último” (1200×300)",
+  noticias: "Entre noticias: tarjeta en Noticias y secciones (600×600)",
+  nota: "En la nota: a mitad del texto (1200×300)",
+  radio: "Patrocinador de la radio: junto al reproductor (600×200)",
+};
+const SECCIONES = ["Cine", "Teatro", "Espectáculos", "Música", "Cultura", "Moda", "Mujer", "Psicología", "Historia", "León", "Fundaciones", "Comunidad", "La radio", "Programación"];
+TYPES.banners = {
+  tab: "Banners", one: "banner", nueva: "Nuevo banner",
+  rowTitle: (r) => r.name,
+  rowSub: (r) => {
+    const hoy = new Date().toLocaleDateString("en-CA", { timeZone: "America/Mexico_City" });
+    const vivo = r.active && (!r.starts_on || r.starts_on <= hoy) && (!r.ends_on || r.ends_on >= hoy);
+    const estado = vivo ? '<span class="tag ok">Al aire</span>' : r.active && r.starts_on > hoy ? '<span class="tag draft">Programado</span>' : '<span class="tag draft">Apagado</span>';
+    const ctr = r.views ? ` (${((r.clicks / r.views) * 100).toFixed(1)}%)` : "";
+    const fechas = r.starts_on || r.ends_on ? ` · ${r.starts_on ? fecha(r.starts_on + "T12:00:00") : "ya"} → ${r.ends_on ? fecha(r.ends_on + "T12:00:00") : "sin fin"}` : "";
+    return `${estado}${esc((SLOTS[r.slot] || r.slot).split(":")[0])}${r.section ? " · " + esc(r.section) : ""}${fechas}<br>${(r.views || 0).toLocaleString("es-MX")} vistas · ${(r.clicks || 0).toLocaleString("es-MX")} clics${ctr}`;
+  },
+  rowImg: (r) => r.image,
+  fields: [
+    { k: "name", label: "Nombre del anunciante o campaña", type: "text", required: true, placeholder: "Zapatería Ejemplo – Buen Fin" },
+    { k: "slot", label: "Dónde se muestra", type: "select", options: Object.entries(SLOTS), required: true },
+    { k: "image", label: "Imagen del banner", type: "image", help: "Usa la medida del espacio que elegiste. Pon el texto importante al centro, porque en celular se recorta un poco." },
+    { k: "url", label: "A dónde lleva al tocarlo", type: "url", placeholder: "https://", help: "Página, WhatsApp (https://wa.me/52…) o redes del anunciante." },
+    { k: "section", label: "Sección (opcional)", type: "select", options: [["", "Todas las secciones"], ...SECCIONES.map((x) => [x, x])], help: "Para “Entre noticias” y “En la nota”: muéstralo solo en una sección, por ejemplo una boutique en Moda." },
+    { row: [{ k: "starts_on", label: "Desde (opcional)", type: "date" }, { k: "ends_on", label: "Hasta (opcional)", type: "date" }] },
+    { k: "active", label: "Encendido", type: "check", default: 1 },
+  ],
+};
 const fecha = (iso) => iso ? new Date(iso).toLocaleDateString("es-MX", { day: "numeric", month: "short", year: "numeric" }) : "";
 
 /* ---------- Entrada y salida ---------- */
@@ -279,6 +308,8 @@ function fieldHtml(f, rec) {
       return `<div class="field"><label>${f.label}</label><div class="days">${DIAS.map((d, i) => `<label><input type="checkbox" name="days" value="${i + 1}"${sel.includes(String(i + 1)) ? " checked" : ""}>${d}</label>`).join("")}</div>
         <div class="days"><button type="button" class="btn small" data-days="1,2,3,4,5">Lunes a viernes</button><button type="button" class="btn small" data-days="6,7">Fin de semana</button><button type="button" class="btn small" data-days="1,2,3,4,5,6,7">Diario</button></div></div>`;
     }
+    case "select": return `<div class="field"><label for="${id}">${f.label}</label>${help}<select id="${id}" name="${f.k}"${req}>
+      ${f.options.map(([val, lab]) => `<option value="${esc(val)}"${String(v ?? "") === val ? " selected" : ""}>${esc(lab)}</option>`).join("")}</select></div>`;
     case "check": return `<label class="check"><input type="checkbox" name="${f.k}"${v ? " checked" : ""}>${f.label}</label>`;
     default: {
       const list = f.list ? ` list="dl_${f.k}"` : "";

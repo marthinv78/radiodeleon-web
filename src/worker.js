@@ -26,7 +26,36 @@ const TABLES = {
     fields: ["name", "logo", "url", "active", "sort"],
     order: "sort, id",
   },
+  banners: {
+    fields: ["name", "image", "url", "slot", "section", "starts_on", "ends_on", "active"],
+    order: "active DESC, COALESCE(ends_on, '9999') DESC, id DESC",
+  },
 };
+// Espacios para banners: portada (Inicio), noticias (tarjeta entre notas),
+// nota (a mitad del texto) y radio (junto al reproductor)
+const BANNER_SLOTS = ["portada", "noticias", "nota", "radio"];
+const BANNERS_SQL = `CREATE TABLE IF NOT EXISTS banners (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  image TEXT,
+  url TEXT,
+  slot TEXT NOT NULL,
+  section TEXT,
+  starts_on TEXT,
+  ends_on TEXT,
+  active INTEGER NOT NULL DEFAULT 1,
+  views INTEGER NOT NULL DEFAULT 0,
+  clicks INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+)`;
+// La tabla de banners se crea sola la primera vez que se usa
+let bannersReady = false;
+async function ensureBanners(env) {
+  if (bannersReady) return;
+  await env.DB.prepare(BANNERS_SQL).run();
+  bannersReady = true;
+}
 // Secciones del portal. La categoría de cada nota debe ser uno de estos nombres.
 const SECTIONS = [
   { name: "Cine", group: "Cultura y espectáculos" },
@@ -61,6 +90,8 @@ export default {
     const p = url.pathname;
     try {
       if (p.startsWith("/api/admin/")) return await adminApi(req, env, url);
+      if (p.startsWith("/b/")) return await bannerClick(env, url);
+      if (p === "/api/banners/view" && req.method === "POST") return await bannerViews(req, env);
       if (p.startsWith("/api/")) return await publicApi(req, env, url);
       if (p.startsWith("/img/")) return await serveImage(req, env, url, ctx);
       return await servePage(req, env, url);
@@ -239,6 +270,16 @@ async function publicApi(req, env, url) {
     return json(await listPosts(env, limit, offset, sec && sec.name), 200, cache);
   }
   if (p === "/api/sections") return json(await sectionsWithCount(env), 200, cache);
+  if (p === "/api/banners") {
+    await ensureBanners(env);
+    const r = await env.DB.prepare(
+      `SELECT id, name, image, slot, section FROM banners
+       WHERE active = 1 AND image IS NOT NULL AND image != ''
+         AND (starts_on IS NULL OR starts_on = '' OR starts_on <= ?)
+         AND (ends_on IS NULL OR ends_on = '' OR ends_on >= ?)`
+    ).bind(today, today).all();
+    return json(r.results, 200, { "cache-control": "public, max-age=60" });
+  }
   let m = p.match(/^\/api\/posts\/([a-z0-9-]+)$/);
   if (m) {
     const post = await env.DB.prepare("SELECT * FROM posts WHERE slug = ? AND published = 1").bind(m[1]).first();
@@ -270,6 +311,27 @@ async function listPosts(env, limit, offset, category = null) {
      FROM posts WHERE ${where} ORDER BY ${TABLES.posts.order} LIMIT ? OFFSET ?`
   ).bind(...(category ? [category] : []), limit, offset).all();
   return r.results;
+}
+
+// Clic en un banner: se cuenta y se manda a la página del anunciante
+async function bannerClick(env, url) {
+  const id = Number(url.pathname.slice(3));
+  await ensureBanners(env);
+  const b = Number.isInteger(id) && id > 0 ? await env.DB.prepare("SELECT url FROM banners WHERE id = ?").bind(id).first() : null;
+  if (!b || !b.url) return Response.redirect(url.origin + "/", 302);
+  await env.DB.prepare("UPDATE banners SET clicks = clicks + 1 WHERE id = ?").bind(id).run();
+  return new Response(null, { status: 302, headers: { location: b.url, "cache-control": "no-store" } });
+}
+
+// Vistas: la página manda los banners que mostró (sin cookies ni datos personales)
+async function bannerViews(req, env) {
+  const body = await req.json().catch(() => ({}));
+  const ids = [...new Set((Array.isArray(body.ids) ? body.ids : []).map(Number))].filter((n) => Number.isInteger(n) && n > 0).slice(0, 10);
+  if (ids.length) {
+    await ensureBanners(env);
+    await env.DB.batch(ids.map((id) => env.DB.prepare("UPDATE banners SET views = views + 1 WHERE id = ?").bind(id)));
+  }
+  return new Response(null, { status: 204 });
 }
 
 async function sectionsWithCount(env) {
@@ -367,11 +429,12 @@ async function adminApi(req, env, url) {
     }
   }
 
-  const m = p.match(/^\/(posts|shows|events|sponsors)(?:\/(\d+))?$/);
+  const m = p.match(/^\/(posts|shows|events|sponsors|banners)(?:\/(\d+))?$/);
   if (!m) return bad("No encontrado", 404);
   const [, table, idStr] = m;
   const def = TABLES[table];
   const id = idStr ? Number(idStr) : null;
+  if (table === "banners") await ensureBanners(env);
 
   if (req.method === "GET" && !id) {
     const r = await env.DB.prepare(`SELECT * FROM ${table} ORDER BY ${def.order}`).all();
@@ -402,7 +465,7 @@ async function adminApi(req, env, url) {
         data.published_at = (prev && prev.published_at) || new Date().toISOString();
       }
     }
-    if (table === "sponsors") data.active = data.active ? 1 : 0;
+    if (table === "sponsors" || table === "banners") data.active = data.active ? 1 : 0;
 
     const cols = Object.keys(data);
     const now = new Date().toISOString();
@@ -433,6 +496,12 @@ function validate(table, d) {
     if ("date" in d && !/^\d{4}-\d{2}-\d{2}$/.test(d.date || "")) return "El evento necesita una fecha.";
   }
   if (table === "sponsors" && "name" in d && !d.name) return "El patrocinador necesita un nombre.";
+  if (table === "banners") {
+    if ("name" in d && !d.name) return "El banner necesita un nombre (por ejemplo, el del anunciante).";
+    if ("slot" in d && !BANNER_SLOTS.includes(d.slot)) return "Elige dónde se muestra el banner.";
+    for (const f of ["starts_on", "ends_on"]) if (d[f] && !/^\d{4}-\d{2}-\d{2}$/.test(d[f])) return "Las fechas van en formato AAAA-MM-DD.";
+    if (d.starts_on && d.ends_on && d.ends_on < d.starts_on) return "La fecha de fin es antes de la de inicio.";
+  }
   for (const f of ["link", "url"]) if (d[f] && !/^https?:\/\//.test(d[f])) return "Los enlaces deben empezar con https://";
   return null;
 }

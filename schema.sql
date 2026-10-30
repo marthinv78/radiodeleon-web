@@ -55,6 +55,24 @@ CREATE TABLE IF NOT EXISTS sponsors (
   updated_at TEXT NOT NULL
 );
 
+-- Banners de anunciantes y eventos. slot: portada | noticias | nota | radio
+-- section: vacío = todas las secciones; o el nombre de una sección (Cine, Moda…)
+CREATE TABLE IF NOT EXISTS banners (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  image TEXT,
+  url TEXT,
+  slot TEXT NOT NULL,
+  section TEXT,
+  starts_on TEXT,     -- "2026-11-01"; vacío = desde ya
+  ends_on TEXT,       -- "2026-11-30"; vacío = sin fin
+  active INTEGER NOT NULL DEFAULT 1,
+  views INTEGER NOT NULL DEFAULT 0,
+  clicks INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS settings (
   key TEXT PRIMARY KEY,
   value TEXT

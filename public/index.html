@@ -197,6 +197,18 @@ main{margin-left:var(--side);min-height:100%;padding-bottom:40px}
 .chips a[aria-current]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .chips a span{opacity:.6;margin-left:4px}
 .eyebrow a{color:inherit}
+/* Banners de anunciantes y eventos */
+.ad{position:relative;display:block;border-radius:var(--radius);overflow:hidden;background:var(--surface);text-decoration:none}
+.ad img{display:block;width:100%;height:100%;object-fit:cover}
+.ad-tag{position:absolute;top:8px;left:8px;font-family:var(--font-mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;background:rgba(255,255,255,.88);color:var(--muted);padding:3px 8px;border-radius:999px}
+.ad-wide{aspect-ratio:4/1;margin:0 0 8px}
+.prose .ad-wide{margin:30px 0}
+.ad-radio{aspect-ratio:3/1}
+.card.ad-card::after{display:none}
+.ad-house{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border:1px dashed var(--line);background:var(--surface);color:var(--muted);text-align:center;padding:14px}
+.ad-house b{font-family:var(--font-display,inherit);color:var(--ink);font-size:15px;text-transform:uppercase}
+.ad-house span{font-family:var(--font-mono);font-size:11px}
+.ad-house.ad-wide{aspect-ratio:auto;min-height:110px}
 .show-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
 .show-card{background:var(--surface);border-radius:var(--radius);overflow:hidden;min-width:0}
 .show-card img,.show-card .ph{width:100%;aspect-ratio:4/3;object-fit:cover;background:var(--surface-2)}
@@ -288,6 +300,7 @@ footer{margin-top:64px;padding-top:20px;border-top:1px solid var(--line);color:v
       <div class="next" id="nextLine" hidden><span class="eyebrow">Sigue</span><span><b id="nextTitle"></b> · <span id="nextArtist"></span></span></div>
       <label class="vol"><span class="eyebrow">Vol</span><input type="range" id="vol" min="0" max="1" step="0.01" value="0.9" aria-label="Volumen"></label>
     </section>
+    <div id="sideAd"></div>
 
     <div class="side-foot">
       <div class="socials" id="socials"></div>
@@ -524,6 +537,40 @@ function sponsorsBlock(list) {
 }
 const footer = () => `<footer><span>© ${new Date().getFullYear()} Radio de León · Tu música, tus recuerdos · León, Guanajuato</span><span>Hecho por Nano Studio</span></footer>`;
 
+/* ---------- Banners ---------- */
+let BANNERS = null;
+async function loadBanners() {
+  if (!BANNERS) BANNERS = await api("/api/banners").catch(() => []);
+  return BANNERS;
+}
+// Elige al azar un banner del espacio; los de una sección tienen prioridad sobre los generales
+function pickBanner(slot, section) {
+  const all = (BANNERS || []).filter((b) => b.slot === slot);
+  const own = all.filter((b) => section && b.section === section);
+  const list = own.length ? own : all.filter((b) => !b.section);
+  return list.length ? list[Math.floor(Math.random() * list.length)] : null;
+}
+function bannerHtml(slot, section, cls) {
+  const b = pickBanner(slot, section);
+  if (b) return `<a class="ad ${cls}" href="/b/${b.id}" target="_blank" rel="noopener sponsored" data-ad="${b.id}"><img src="${esc(b.image)}" alt="${esc(b.name)}" loading="lazy"><span class="ad-tag">Publicidad</span></a>`;
+  // Espacio libre en portada y junto a la radio: se ofrece a anunciantes
+  const wa = HOME && HOME.settings && HOME.settings.whatsapp;
+  if (!wa || (slot !== "portada" && slot !== "radio")) return "";
+  const msg = encodeURIComponent("Hola, quiero anunciarme en Radio de León");
+  return `<a class="ad ad-house ${cls}" href="https://wa.me/${esc(String(wa).replace(/\D/g, ""))}?text=${msg}" target="_blank" rel="noopener"><b>Anúnciate aquí</b><span>Tu marca frente a la audiencia de Radio de León</span></a>`;
+}
+// Cuenta una vista por cada banner mostrado (sin cookies ni datos personales)
+function countAdViews(root) {
+  const ids = $$("[data-ad]", root).map((a) => +a.dataset.ad);
+  if (ids.length) fetch("/api/banners/view", { method: "POST", keepalive: true, headers: { "content-type": "application/json" }, body: JSON.stringify({ ids }) }).catch(() => {});
+}
+function renderSideAd() {
+  const el = $("#sideAd");
+  if (!el) return;
+  el.innerHTML = bannerHtml("radio", null, "ad-radio");
+  countAdViews(el);
+}
+
 let SECTIONS = null;
 async function loadSections() {
   if (!SECTIONS) SECTIONS = await api("/api/sections");
@@ -542,8 +589,23 @@ function chips(sections, current, title) {
     ${a("/noticias", "Todas", !current && !title)}${list.map((s) => a(`/seccion/${s.slug}`, s.name, s.slug === current, s.count)).join("")}
   </nav>${title ? "</section>" : ""}`;
 }
+// Banner a mitad del texto de la nota (después del tercer bloque, o al final si es corta)
+function withAdInText(html, section) {
+  const ad = bannerHtml("nota", section, "ad-wide");
+  if (!ad) return html;
+  const parts = html.split(/(?<=<\/(?:p|ul|h3)>)/);
+  const at = Math.min(3, parts.length);
+  return [...parts.slice(0, at), ad, ...parts.slice(at)].join("");
+}
+// Tarjeta de anunciante en la cuarta posición de la lista
+function withAdCard(cards, section) {
+  const b = cards.length >= 3 && pickBanner("noticias", section);
+  if (!b) return cards;
+  const ad = `<a class="card ad-card" href="/b/${b.id}" target="_blank" rel="noopener sponsored" data-ad="${b.id}"><img src="${esc(b.image)}" alt="${esc(b.name)}" loading="lazy"><span class="ad-tag">Publicidad</span></a>`;
+  return [...cards.slice(0, 3), ad, ...cards.slice(3)];
+}
 async function newsList(slug) {
-  const sections = await loadSections();
+  const [sections] = await Promise.all([loadSections(), loadBanners()]);
   const sec = slug && sections.find((s) => s.slug === slug);
   if (slug && !sec) throw new Error("Esa sección no existe");
   const q = sec ? `&seccion=${sec.slug}` : "";
@@ -551,20 +613,21 @@ async function newsList(slug) {
   if (sec) document.title = `${sec.name} · Radio de León`;
   return `<section class="sec"><div class="sec-head"><h1>${sec ? esc(sec.name) : "Noticias"}</h1><span class="eyebrow">${sec ? esc(sec.group) : "Radio de León"}</span></div>
       ${chips(sections, slug)}
-      ${posts.length ? `<div class="mosaic" id="newsList">${posts.map(newsCard).join("")}</div>` : `<p class="empty">Pronto publicaremos notas en esta sección.</p>`}
+      ${posts.length ? `<div class="mosaic" id="newsList">${withAdCard(posts.map(newsCard), sec && sec.name).join("")}</div>` : `<p class="empty">Pronto publicaremos notas en esta sección.</p>`}
       ${posts.length === 12 ? `<div class="more-wrap"><button class="btn ghost" id="moreBtn" data-offset="12" data-seccion="${sec ? sec.slug : ""}">Cargar más noticias</button></div>` : ""}
     </section>${footer()}`;
 }
 
 const VIEWS = {
   async home() {
-    const h = await loadHome();
+    const [h] = await Promise.all([loadHome(), loadBanners()]);
     const today = mxNow().day;
     const todayShows = h.shows.filter((s) => showDays(s).includes(today));
     return `
       <section class="sec"><div class="sec-head"><h1>Lo último</h1><a href="/noticias" data-link>Ver todas las noticias →</a></div>
         ${h.posts.length ? `<div class="mosaic">${h.posts.slice(0, 6).map(newsCard).join("")}</div>` : `<p class="empty">Pronto publicaremos noticias.</p>`}
       </section>
+      ${((ad) => ad && `<section class="sec">${ad}</section>`)(bannerHtml("portada", null, "ad-wide"))}
       ${chips(await loadSections(), null, "Explora por sección")}
       ${todayShows.length ? `<section class="sec"><div class="sec-head"><h2>Hoy en la radio</h2><a href="/programas" data-link>Toda la programación →</a></div>
         <div class="today">${todayShows.map(slotRow).join("")}</div></section>` : ""}
@@ -581,7 +644,7 @@ const VIEWS = {
     return newsList(slug);
   },
   async nota(slug) {
-    const [p] = await Promise.all([api(`/api/posts/${encodeURIComponent(slug)}`), loadSections()]);
+    const [p] = await Promise.all([api(`/api/posts/${encodeURIComponent(slug)}`), loadSections(), loadBanners()]);
     document.title = `${p.title} · Radio de León`;
     const url = location.href;
     return `<article class="sec article">
@@ -590,7 +653,7 @@ const VIEWS = {
       <div class="eyebrow" style="margin-top:22px">${catLink(p.category)} · ${fechaLarga(p.published_at || p.created_at)}</div>
       <h1>${esc(p.title)}</h1>
       ${p.excerpt ? `<p class="lead">${esc(p.excerpt)}</p>` : ""}
-      <div class="prose">${md(p.body)}</div>
+      <div class="prose">${withAdInText(md(p.body), p.category)}</div>
       <div class="share">
         <a class="btn wa" href="https://wa.me/?text=${encodeURIComponent(p.title + " " + url)}" target="_blank" rel="noopener">Compartir por WhatsApp</a>
         <button class="btn ghost" data-copy="${esc(url)}">Copiar enlace</button>
@@ -649,6 +712,8 @@ async function route() {
   const el = $("#view");
   try { el.innerHTML = await VIEWS[view](arg); }
   catch (e) { el.innerHTML = `<section class="sec"><p class="empty">${esc(e.message)}. <a href="/" data-link>Volver al inicio</a></p></section>`; }
+  countAdViews(el);
+  loadBanners().then(renderSideAd);
   if ($("#history") && NP) renderHistory();
   if (view === "programas" && HOME && HOME.shows.length) renderDay(mxNow().day);
 }

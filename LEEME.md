@@ -96,6 +96,24 @@ Deja una línea en blanco entre párrafos.
 
 ---
 
+## Banners de anunciantes y eventos
+
+En `/admin` → **Banners** → *+ Nuevo banner*. Hay 4 espacios; usa la medida de cada uno:
+
+| Espacio | Dónde sale | Medida |
+|---|---|---|
+| Portada | Inicio, debajo de "Lo último" | 1200×300 |
+| Entre noticias | Tarjeta en la 4.ª posición de Noticias y de cada sección | 600×600 |
+| En la nota | A mitad del texto de cada nota | 1200×300 |
+| Patrocinador de la radio | Junto al reproductor, siempre visible (en celular, dentro del menú) | 600×200 |
+
+- **Sección (opcional):** muéstralo solo en una sección, por ejemplo una boutique en *Moda*. En esa sección tiene prioridad sobre los banners generales.
+- **Desde / Hasta:** el banner aparece y desaparece solo. Déjalos vacíos para que salga siempre.
+- Si hay varios banners en el mismo espacio, **se turnan** al azar en cada visita.
+- En la lista ves **vistas, clics y porcentaje** de cada banner, para mostrárselos al anunciante. No usa cookies ni datos personales.
+- Si la portada o el espacio de la radio no tienen banner, se muestra **"Anúnciate aquí"** con tu WhatsApp de *Ajustes*.
+- Cada banner lleva la etiqueta **Publicidad**.
+
 ## Agente editorial
 
 Un agente de Claude investiga, escribe y sube notas sobre moda, mujer, psicología, fundaciones, historia, cine, teatro, espectáculos y cultura. Las deja **como borrador**: tú las lees en `/admin` y les das **Publicar**.
