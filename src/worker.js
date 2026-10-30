@@ -171,6 +171,9 @@ function stationLd(url, st) {
     const h = v.replace(/^@/, "");
     return { facebook: `https://www.facebook.com/${h}`, instagram: `https://www.instagram.com/${h}`, tiktok: `https://www.tiktok.com/@${h}`, youtube: `https://www.youtube.com/@${h}` }[k];
   }).filter(Boolean);
+  // El WhatsApp de los ajustes, con lada de México si viene a 10 dígitos
+  const digits = String(st.whatsapp || "").replace(/\D/g, "");
+  const phone = digits ? `+${digits.length === 10 ? "52" + digits : digits}` : "";
   return [
     { "@context": "https://schema.org", "@type": "WebSite", name: SITE_NAME, url: `${url.origin}/`, inLanguage: "es-MX" },
     {
@@ -180,6 +183,12 @@ function stationLd(url, st) {
       description: "La radio por internet de León, Guanajuato, con música las 24 horas, noticias, programas y eventos.",
       address: { "@type": "PostalAddress", addressLocality: "León", addressRegion: "Guanajuato", addressCountry: "MX" },
       areaServed: "León, Guanajuato",
+      // La radio transmite todo el día, todos los días
+      openingHoursSpecification: {
+        "@type": "OpeningHoursSpecification", opens: "00:00", closes: "23:59",
+        dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+      },
+      ...(phone ? { telephone: phone } : {}),
       ...(st.email ? { email: st.email } : {}),
       ...(sameAs.length ? { sameAs } : {}),
     },
