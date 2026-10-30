@@ -143,7 +143,7 @@ export default {
 // Páginas
 // ---------------------------------------------------------------
 const SITE_NAME = "Radio de León";
-const PAGE_TITLES = { "/noticias": "Noticias", "/programas": "Programas", "/eventos": "Eventos", "/contacto": "Contacto" };
+const PAGE_TITLES = { "/noticias": "Noticias", "/programas": "Programas", "/eventos": "Eventos", "/contacto": "Contacto", "/privacidad": "Aviso de privacidad" };
 
 async function servePage(req, env, url) {
   if (url.pathname === "/robots.txt") return robots(url);

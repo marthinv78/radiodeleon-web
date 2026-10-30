@@ -595,7 +595,7 @@ function sponsorsBlock(list) {
       return s.url ? `<a class="sponsor" href="${esc(s.url)}" target="_blank" rel="noopener">${inner}</a>` : `<div class="sponsor">${inner}</div>`;
     }).join("")}</div></section>`;
 }
-const footer = () => `<footer><span>© ${new Date().getFullYear()} Radio de León · Tu música, tus recuerdos · León, Guanajuato</span><span>Hecho por Nano Studio</span></footer>`;
+const footer = () => `<footer><span>© ${new Date().getFullYear()} Radio de León · Tu música, tus recuerdos · León, Guanajuato</span><span><a href="/privacidad" data-link>Aviso de privacidad</a> · Hecho por Nano Studio</span></footer>`;
 
 /* ---------- Banners ---------- */
 let BANNERS = null;
@@ -793,6 +793,35 @@ const VIEWS = {
         </div>
       </div></section>${sponsorsBlock(h.sponsors)}${footer()}`;
   },
+  async privacidad() {
+    document.title = "Aviso de privacidad · Radio de León";
+    const st = (await loadHome().catch(() => ({ settings: {} }))).settings || {};
+    const wa = st.whatsapp ? socialUrl("whatsapp", st.whatsapp) : "";
+    const contacto = [st.email ? `al correo <a href="mailto:${esc(st.email)}">${esc(st.email)}</a>` : "", wa ? `por <a href="${esc(wa)}" target="_blank" rel="noopener">WhatsApp</a>` : ""].filter(Boolean).join(" o ") || `desde la sección <a href="/contacto" data-link>Contacto</a>`;
+    return `<article class="sec article">
+      <div class="eyebrow">Actualizado el 30 de octubre de 2026</div>
+      <h1>Aviso de privacidad</h1>
+      <p class="lead">Radio de León, con domicilio en León, Guanajuato, México, es responsable del uso de los datos personales que se obtienen por este sitio (radiodeleon.com) y por sus redes sociales.</p>
+      <div class="prose">
+        <h3>Qué datos usamos</h3>
+        <ul>
+          <li><b>Para escuchar la radio y leer las notas no necesitas registrarte</b> ni darnos ningún dato.</li>
+          <li><b>No usamos cookies de rastreo ni publicidad personalizada.</b> El sitio solo guarda en tu navegador el volumen del reproductor.</li>
+          <li><b>Contamos las vistas y los clics de los anuncios</b> como números totales, sin saber quién los hizo.</li>
+          <li><b>Si nos escribes</b> por WhatsApp, correo o redes sociales, usamos tu nombre, número o correo y lo que nos mandes solo para contestarte, leer tus saludos al aire si lo pides o atender una solicitud de publicidad.</li>
+          <li><b>Nuestro proveedor de hosting</b> (Cloudflare) registra datos técnicos de cada visita, como la dirección IP, para proteger el sitio de ataques. No los usamos para identificarte.</li>
+        </ul>
+        <h3>Facebook e Instagram</h3>
+        <p>Usamos una aplicación de Meta para publicar automáticamente nuestras notas en la página de Facebook y en la cuenta de Instagram de Radio de León. Esa aplicación solo publica nuestro propio contenido: no inicia sesión con tu cuenta, no lee tus datos y no guarda información de nuestros seguidores. Lo que hagas en Facebook, Instagram o WhatsApp se rige por las políticas de privacidad de Meta.</p>
+        <h3>Con quién compartimos datos</h3>
+        <p>No vendemos ni rentamos tus datos. Solo los compartimos si una autoridad lo pide conforme a la ley.</p>
+        <h3>Tus derechos y cómo borrar tus datos</h3>
+        <p>Puedes pedir en cualquier momento acceder, corregir o borrar tus datos, u oponerte a que los usemos (derechos ARCO), escribiéndonos ${contacto}. Dinos qué quieres hacer y cómo te contactamos; te respondemos en un máximo de 20 días hábiles.</p>
+        <h3>Cambios a este aviso</h3>
+        <p>Si cambiamos este aviso, publicaremos la nueva versión en esta misma página con su fecha.</p>
+      </div>
+    </article>${footer()}`;
+  },
 };
 
 /* ---------- Navegación sin cortar la música ---------- */
@@ -809,7 +838,7 @@ async function route() {
   if (!VIEWS[view]) view = "home";
   $$(".nav a").forEach((a) => a.toggleAttribute("aria-current", (a.getAttribute("href") === path) || ((view === "nota" || view === "seccion") && a.getAttribute("href") === "/noticias") || (view === "evento" && a.getAttribute("href") === "/eventos")));
   $$(".nav a[aria-current]").forEach((a) => a.setAttribute("aria-current", "page"));
-  if (!["nota", "seccion", "evento"].includes(view)) document.title = view === "home" ? "Radio de León" : `${view[0].toUpperCase() + view.slice(1)} · Radio de León`;
+  if (!["nota", "seccion", "evento", "privacidad"].includes(view)) document.title = view === "home" ? "Radio de León" : `${view[0].toUpperCase() + view.slice(1)} · Radio de León`;
   const el = $("#view");
   try { el.innerHTML = await VIEWS[view](arg); }
   catch (e) { el.innerHTML = `<section class="sec"><p class="empty">${esc(e.message)}. <a href="/" data-link>Volver al inicio</a></p></section>`; }
