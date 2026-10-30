@@ -4,6 +4,8 @@
 // - API pública:   /api/home, /api/posts, /api/posts/:slug, /api/shows,
 //                  /api/events, /api/sponsors, /api/settings
 // - API de admin:  /api/admin/...  (requiere iniciar sesión)
+//                  El agente editorial entra con EDITOR_TOKEN: solo puede
+//                  ver notas, crear borradores y subir fotos.
 // - Imágenes:      /img/:clave     (guardadas en KV)
 // =============================================================
 
@@ -198,7 +200,12 @@ async function adminApi(req, env, url) {
     return json({ ok: true }, 200, { ...headers, "set-cookie": "rdl_s=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0" });
   }
 
-  if (!(await isLoggedIn(req, env))) return bad("Tu sesión terminó. Vuelve a entrar.", 401);
+  const admin = await isLoggedIn(req, env);
+  const editor = !admin && (await isEditor(req, env));
+  if (!admin && !editor) return bad("Tu sesión terminó. Vuelve a entrar.", 401);
+  if (editor && !(p === "/upload" || (p === "/posts" && ["GET", "POST"].includes(req.method)))) {
+    return bad("El agente editorial solo puede crear borradores y subir fotos.", 403);
+  }
   if (p === "/me") return json({ ok: true }, 200, headers);
 
   if (p === "/upload" && req.method === "POST") {
@@ -252,7 +259,7 @@ async function adminApi(req, env, url) {
     if (err) return bad(err);
 
     if (table === "posts") {
-      data.published = data.published ? 1 : 0;
+      data.published = data.published && !(editor && env.EDITOR_AUTOPUBLISH !== "1") ? 1 : 0;
       if (!data.slug) data.slug = slugify(data.title);
       data.slug = await uniqueSlug(env, slugify(data.slug), id);
       if (data.published && !data.published_at) {
@@ -336,6 +343,10 @@ async function safeEqual(a, b) {
   let diff = 0;
   for (let i = 0; i < x.length; i++) diff |= x[i] ^ y[i];
   return diff === 0;
+}
+async function isEditor(req, env) {
+  const m = (req.headers.get("authorization") || "").match(/^Bearer (.+)$/);
+  return !!(env.EDITOR_TOKEN && m && (await safeEqual(m[1], env.EDITOR_TOKEN)));
 }
 async function isLoggedIn(req, env) {
   if (!env.SESSION_SECRET) return false;

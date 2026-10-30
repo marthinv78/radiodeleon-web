@@ -96,6 +96,26 @@ Deja una línea en blanco entre párrafos.
 
 ---
 
+## Agente editorial
+
+Un agente de Claude investiga, escribe y sube notas sobre moda, mujer, psicología, fundaciones, historia, cine, teatro, espectáculos y cultura. Las deja **como borrador**: tú las lees en `/admin` y les das **Publicar**.
+
+- La línea editorial (voz, secciones y reglas) está en `editorial/GUIA.md`. Si la cambias, el agente la sigue desde la siguiente nota.
+- Los pasos que sigue el agente están en `.claude/skills/agente-editorial/SKILL.md`.
+- El agente usa su propia llave, que solo sirve para crear borradores y subir fotos: no puede borrar, publicar ni tocar ajustes.
+
+**Darle su llave (una sola vez):**
+```
+npx wrangler secret put EDITOR_TOKEN
+```
+Escribe un texto largo y al azar y guárdalo en Vaultwarden. Ese mismo valor va en la variable `RDL_EDITOR_TOKEN` del entorno donde corre el agente.
+
+**Cuando confíes en el agente** y quieras que publique sin tu revisión:
+```
+npx wrangler secret put EDITOR_AUTOPUBLISH
+```
+y escribe `1`. Para volver a revisarlas tú, bórralo con `npx wrangler secret delete EDITOR_AUTOPUBLISH`.
+
 ## Hacer cambios al diseño
 
 Edita los archivos de `public/` (`index.html` es la página y `admin.html` el panel) y vuelve a correr:
@@ -125,6 +145,7 @@ public/index.html   página pública (reproductor, noticias, programas, eventos,
 public/admin.html   panel de administración
 public/og.jpg       imagen al compartir la página
 src/worker.js       servidor: API, sesión del panel, fotos y vista previa para WhatsApp
+editorial/          guía editorial, plantilla de nota y script con que el agente sube borradores
 schema.sql          estructura de la base de datos y notas iniciales
 wrangler.toml       configuración de Cloudflare
 ```
