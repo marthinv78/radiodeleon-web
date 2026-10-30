@@ -12,6 +12,7 @@
 //   ---
 //   titulo: ...
 //   categoria: Cine
+//   tambien: Música, León      (opcional; otras secciones donde también aparece)
 //   resumen: ...
 //   foto: https://images.unsplash.com/...?w=1600   (enlace directo a la imagen)
 //   foto_credito: Nombre del autor / Unsplash
@@ -126,6 +127,8 @@ const sections = await (await fetch(`${BASE}/api/sections`)).json();
 if (!sections.some((s) => s.name === meta.categoria)) {
   die(`"${meta.categoria}" no es una sección del portal. Usa una de: ${sections.map((s) => s.name).join(", ")}.`);
 }
+const also = String(meta.tambien || "").split(",").map((s) => s.trim()).filter((s) => s && s !== meta.categoria);
+for (const s of also) if (!sections.some((x) => x.name === s)) die(`"${s}" (en "tambien") no es una sección del portal.`);
 if (meta.fuentes.length === 0) die("Toda nota necesita al menos una fuente.");
 if (body.split(/\s+/).length < 300) die("La nota es muy corta (mínimo 300 palabras).");
 
@@ -143,6 +146,7 @@ const post = await api("/posts", {
   body: JSON.stringify({
     title: meta.titulo,
     category: meta.categoria,
+    extra_categories: also.join("|"),
     excerpt: meta.resumen,
     body: text,
     image,

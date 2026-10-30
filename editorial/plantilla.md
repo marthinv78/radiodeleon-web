@@ -1,6 +1,7 @@
 ---
 titulo: El título de la nota, entre 50 y 75 caracteres
 categoria: Cine
+tambien:
 resumen: Una o dos frases que digan de qué trata y por qué leerla.
 foto: https://images.unsplash.com/photo-XXXX?w=1600&q=80&fm=jpg
 foto_credito: Nombre del fotógrafo / Unsplash
