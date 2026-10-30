@@ -178,10 +178,7 @@ Lo que la gente puede decir:
 3. En **Build → Interaction Model → JSON Editor**, borra lo que hay, pega el contenido de `alexa/modelo-de-voz.json`, y dale **Save** y luego **Build skill**.
 4. En **Build → Interfaces**, prende **Audio Player** y dale **Save**.
 5. En **Build → Endpoint**, elige **HTTPS**. En *Default Region* escribe `https://radiodeleon.com/alexa` y elige *"My development endpoint has a certificate from a trusted certificate authority"*. Dale **Save**.
-6. Copia el **Skill ID** (empieza con `amzn1.ask.skill`) y guárdalo en Cloudflare, para que solo tu skill pueda usar esa dirección:
-```
-npx wrangler secret put ALEXA_SKILL_ID
-```
+6. El **Skill ID** (en la lista de skills, enlace *Copy Skill ID*) ya está en `wrangler.toml` como `ALEXA_SKILL_ID`: solo esa skill puede usar la dirección. Si algún día creas otra skill, cámbialo ahí y vuelve a publicar.
 7. En la pestaña **Test**, cambia *Off* a **Development**. Ya puedes decirle a tu bocina *"Alexa, abre Radio de León"*.
 8. Para que la use todo el mundo: en **Distribution** llena los textos que están en `alexa/skill.json` (nombre, resumen, descripción, frases de ejemplo y palabras clave), sube los íconos `public/brand/alexa-108.png` y `public/brand/alexa-512.png` y pon como política de privacidad `https://radiodeleon.com/privacidad`. Después, en **Certification**, dale **Submit for review**. Amazon tarda unos días en aprobarla.
 
