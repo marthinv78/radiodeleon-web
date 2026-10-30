@@ -102,7 +102,8 @@ const bad = (msg, status = 400) => json({ error: msg }, status);
 
 // Dirección principal. Las otras redirigen aquí (las llamadas a /api/ y /b/ siguen funcionando en todas).
 const MAIN_HOST = "radiodeleon.com";
-const OLD_HOSTS = ["radiodeleon.nanostudio.com.mx", "www.radiodeleon.com"];
+// radiodeleon.nanostudio.com.mx se agrega aquí cuando radiodeleon.com ya responda
+const OLD_HOSTS = ["www.radiodeleon.com"];
 
 export default {
   async fetch(req, env, ctx) {
