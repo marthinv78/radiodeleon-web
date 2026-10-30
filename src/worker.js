@@ -154,12 +154,13 @@ export default {
 // Páginas
 // ---------------------------------------------------------------
 const SITE_NAME = "Radio de León";
-const PAGE_TITLES = { "/noticias": "Noticias", "/programas": "Programas", "/eventos": "Eventos", "/contacto": "Contacto", "/privacidad": "Aviso de privacidad" };
+const PAGE_TITLES = { "/noticias": "Noticias", "/programas": "Programas", "/eventos": "Eventos", "/contacto": "Contacto", "/privacidad": "Aviso de privacidad", "/anunciate": "Anúnciate" };
 const PAGE_DESCS = {
   "/noticias": "Noticias de cultura, espectáculos, música, cine, historia y comunidad de León, Guanajuato, en Radio de León.",
   "/programas": "La programación de Radio de León: programas, locutores y horarios. Música las 24 horas desde León, Guanajuato.",
   "/eventos": "Conciertos, teatro, festivales y exposiciones en León y Guanajuato: la agenda de Radio de León.",
   "/contacto": "Escríbenos por WhatsApp o correo: saludos, complacencias, publicidad y músicos que quieren sonar en Radio de León.",
+  "/anunciate": "Anuncia tu negocio en Radio de León: spots al aire, banners en la página y publicaciones en Facebook e Instagram. Precios de lanzamiento.",
   "/privacidad": "Aviso de privacidad de Radio de León: qué datos usamos y cómo ejercer tus derechos.",
 };
 // Ficha para Google: qué es Radio de León, su logo y sus redes

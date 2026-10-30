@@ -1,0 +1,103 @@
+<!doctype html>
+<!-- Kit para anunciantes de Radio de León (una hoja carta).
+     Para volver a generar el PDF después de cambiar algo:
+       node kit-anunciantes/generar-pdf.mjs
+     Los precios deben coincidir con ADV_PACKS en public/index.html. -->
+<html lang="es-MX">
+<head>
+<meta charset="utf-8">
+<title>Radio de León · Anúnciate</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+@page{size:letter;margin:0}
+:root{--ink:#0e1729;--muted:#5a6375;--line:#dcdfe5;--surface:#f2f3f5;--navy:#00143b;--gold:#ddb05c;--suela:#8f6411;--blue:#1b5fd4}
+*{box-sizing:border-box}
+html,body{margin:0;width:8.5in;height:11in}
+body{font-family:"Source Sans 3",Arial,sans-serif;color:var(--ink);font-size:10.5pt;line-height:1.4;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+h1,h2,h3{font-family:Montserrat,Arial,sans-serif;margin:0;line-height:1.05;text-transform:uppercase}
+.mono{font-family:"JetBrains Mono",monospace;font-size:7.5pt;letter-spacing:.14em;text-transform:uppercase}
+.top{background:var(--navy);color:#fff;padding:.38in .55in .32in;display:grid;grid-template-columns:1fr auto;gap:.3in;align-items:center}
+.top img{width:2.3in;display:block}
+.top h1{font-size:24pt;font-weight:900;color:#fff;margin:.14in 0 .07in}
+.top p{margin:0;color:#c9d2e3;font-size:11pt;max-width:4.6in}
+.top .mono{color:var(--gold)}
+main{padding:.26in .55in 0}
+h2{font-size:12pt;font-weight:900;border-bottom:1.5px solid var(--ink);padding-bottom:4px;margin:0 0 .12in}
+.where{display:grid;grid-template-columns:repeat(4,1fr);gap:.12in;margin-bottom:.22in}
+.where div{background:var(--surface);border-radius:8px;padding:.12in}
+.where b{display:block;font-family:Montserrat,Arial,sans-serif;font-size:9pt;text-transform:uppercase;margin:3px 0}
+.where p{margin:0;color:var(--muted);font-size:8.8pt;line-height:1.35}
+.where .mono{color:var(--suela);font-size:6.5pt}
+.packs{display:grid;grid-template-columns:repeat(3,1fr);gap:.14in;margin-bottom:.18in}
+.pack{border:1px solid var(--line);border-radius:10px;padding:.16in;position:relative}
+.pack.f{border:1.5px solid var(--navy)}
+.pack .tag{position:absolute;top:-8px;left:.16in;background:var(--navy);color:var(--gold);border-radius:99px;padding:2px 8px;font-size:6.5pt}
+.pack h3{font-size:10.5pt;font-weight:900}
+.pack .for{color:var(--muted);font-size:8.8pt;margin:2px 0 6px}
+.price{font-family:Montserrat,Arial,sans-serif;font-weight:900;font-size:20pt;line-height:1}
+.price small{font-family:"Source Sans 3",Arial,sans-serif;font-weight:400;font-size:8pt;color:var(--muted)}
+.pack ul{margin:8px 0 0;padding-left:1.05em;font-size:8.8pt;display:grid;gap:3px}
+.founder{background:var(--navy);color:#fff;border-radius:10px;padding:.18in .22in;display:grid;grid-template-columns:1fr;gap:4px;margin-bottom:.2in}
+.founder h3{color:var(--gold);font-size:12pt;font-weight:900}
+.founder p{margin:0;color:#d9e0ee;font-size:9.5pt}
+.bottom{display:grid;grid-template-columns:1fr auto;gap:.3in;align-items:center}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:.12in;margin:0;padding:0;list-style:none;counter-reset:s}
+.steps li{counter-increment:s;font-size:9pt;color:var(--ink)}
+.steps li::before{content:counter(s);display:block;font-family:Montserrat,Arial,sans-serif;font-weight:900;font-size:15pt;color:var(--blue)}
+.qr{text-align:center}
+.qr img{width:.95in;height:.95in;display:block;margin:0 auto 5px}
+.qr b{font-family:Montserrat,Arial,sans-serif;font-size:9.5pt}
+.qr .mono{display:block;color:var(--muted);font-size:6.5pt;margin-top:2px}
+.note{color:var(--muted);font-size:8pt;margin:.1in 0 0}
+</style>
+</head>
+<body>
+<header class="top">
+  <div>
+    <span class="mono">Para negocios de León y el Bajío</span>
+    <h1>Anúnciate en<br>Radio de León</h1>
+    <p>Una radio nueva, hecha en León para la gente de León. Música las 24 horas, noticias de la ciudad y redes que se mueven todos los días. Tu marca puede estar desde el principio.</p>
+  </div>
+  <img src="../public/brand/logo-h@2x.webp" alt="Radio de León">
+</header>
+<main>
+  <h2>Dónde aparece tu marca</h2>
+  <div class="where">
+    <div><span class="mono">01 · Al aire</span><b>En la radio</b><p>Spots de 20 segundos entre canciones, en la transmisión de 24 horas por internet.</p></div>
+    <div><span class="mono">02 · En la página</span><b>radiodeleon.com</b><p>Banners en la portada, entre noticias, en las notas y junto al reproductor.</p></div>
+    <div><span class="mono">03 · En redes</span><b>Facebook e Instagram</b><p>Cada nota se publica en nuestras redes, y tu marca puede ir en publicaciones dedicadas.</p></div>
+    <div><span class="mono">04 · Por tema</span><b>En tu sección</b><p>Una boutique en Moda, un restaurante en León: tu anuncio donde está tu cliente.</p></div>
+  </div>
+
+  <h2>Paquetes · precios de lanzamiento</h2>
+  <div class="packs">
+    <div class="pack"><h3>Presencia</h3><p class="for">Para que te conozcan en la página.</p>
+      <div class="price">$990 <small>MXN al mes + IVA</small></div>
+      <ul><li>Banner en radiodeleon.com, en la portada y entre noticias</li><li>Tu logo en la sección de patrocinadores</li><li>Reporte mensual de vistas y clics</li></ul></div>
+    <div class="pack f"><span class="tag mono">Recomendado</span><h3>Al aire</h3><p class="for">Para que te escuchen y te vean.</p>
+      <div class="price">$2,490 <small>MXN al mes + IVA</small></div>
+      <ul><li>Todo lo del paquete Presencia</li><li>Spot de 20 segundos, 6 veces al día en la radio</li><li>2 publicaciones al mes en Facebook e Instagram</li></ul></div>
+    <div class="pack"><h3>Patrocinador de sección</h3><p class="for">Para ser la marca de un tema.</p>
+      <div class="price">$4,990 <small>MXN al mes + IVA</small></div>
+      <ul><li>Todo lo del paquete Al aire</li><li>Banner exclusivo en tu sección</li><li>Una nota al mes sobre tu negocio</li><li>Mención "presentado por" en la sección</li></ul></div>
+  </div>
+
+  <div class="founder">
+    <span class="mono" style="color:var(--gold)">Socios fundadores</span>
+    <h3>Tu precio de lanzamiento, congelado 12 meses</h3>
+    <p>Los primeros 10 anunciantes conservan estos precios durante un año completo, aunque la radio crezca, y su logo aparece en la portada mientras sigan con nosotros.</p>
+  </div>
+
+  <h2>Cómo empezar</h2>
+  <div class="bottom">
+    <ol class="steps">
+      <li>Escríbenos por WhatsApp y cuéntanos de tu negocio.</li>
+      <li>Eliges tu paquete y nos mandas tu logo, imagen o audio. Si no tienes spot, te ayudamos a armarlo.</li>
+      <li>Tu marca sale al aire y en la página, y cada mes te contamos cómo le fue.</li>
+    </ol>
+    <div class="qr"><img src="qr-anunciate.svg" alt=""><b>radiodeleon.com/anunciate</b><span class="mono">Escanea para escribirnos</span></div>
+  </div>
+  <p class="note">¿Un evento, una temporada o el patrocinio de un programa? Escríbenos y lo armamos a tu medida.</p>
+</main>
+</body>
+</html>
