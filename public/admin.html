@@ -94,6 +94,8 @@ textarea.big{min-height:320px;font-family:var(--font-mono);font-size:14px;line-h
 .img-field .preview{width:160px;aspect-ratio:16/10;border-radius:10px;background:var(--surface-2);object-fit:cover;display:grid;place-items:center;color:var(--muted);font-size:13px;text-align:center;padding:8px}
 .img-field img.preview{padding:0}
 .img-btns{display:flex;flex-direction:column;gap:8px}
+.img-url{display:flex;gap:8px;flex-basis:100%}
+.img-url input{flex:1;min-width:0}
 .form-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:space-between;border-top:1px solid var(--line);padding-top:18px}
 .form-actions div{display:flex;gap:10px;flex-wrap:wrap}
 .md-tools{display:flex;gap:6px;flex-wrap:wrap}
@@ -300,8 +302,8 @@ function fieldHtml(f, rec) {
     case "image": return `<div class="field"><label>${f.label}</label>${help}
       <div class="img-field" data-img="${f.k}">
         ${v ? `<img class="preview" src="${esc(v)}" alt="">` : `<div class="preview">Sin foto</div>`}
-        <div class="img-btns"><label class="btn small" style="cursor:pointer">${v ? "Cambiar foto" : "Subir foto"}<input type="file" accept="image/*" hidden></label>
-        ${v ? `<button type="button" class="btn small danger" data-rmimg>Quitar</button>` : ""}</div>
+        <div class="img-btns">${imgBtns(v)}</div>
+        <div class="img-url" hidden><input type="url" placeholder="https://… enlace directo a la imagen"><button type="button" class="btn small" data-useurl>Usar</button></div>
         <input type="hidden" name="${f.k}" value="${esc(v)}">
       </div></div>`;
     case "days": {
@@ -349,10 +351,17 @@ function formView(type, rec) {
     if (mdb) mdAction(mdb.dataset.md);
     const rm = e.target.closest("[data-rmimg]");
     if (rm) { const box = rm.closest("[data-img]"); setImage(box, ""); }
+    const pu = e.target.closest("[data-pasteurl]");
+    if (pu) { const row = pu.closest("[data-img]").querySelector(".img-url"); row.hidden = !row.hidden; if (!row.hidden) row.querySelector("input").focus(); }
+    const use = e.target.closest("[data-useurl]");
+    if (use) imageFromUrl(use.closest("[data-img]"));
     const del = e.target.closest("#delBtn");
     if (del) remove(type, rec);
   });
   $$("[data-img] input[type=file]", form).forEach((inp) => inp.addEventListener("change", () => uploadImage(inp)));
+  $$("[data-img] .img-url input", form).forEach((inp) => inp.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { e.preventDefault(); imageFromUrl(inp.closest("[data-img]")); }
+  }));
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -431,10 +440,24 @@ async function uploadImage(inp) {
     setImage(box, data.url);
   } catch (er) { setImage(box, box.querySelector("input[type=hidden]").value); toast(er.message); }
 }
+// Pegar el enlace de una foto que ya está en internet: no ocupa espacio en la página
+function imageFromUrl(box) {
+  const inp = box.querySelector(".img-url input");
+  const url = inp.value.trim();
+  if (!/^https:\/\/\S+$/.test(url)) return toast("Pega un enlace que empiece con https://");
+  const test = new Image();
+  test.onload = () => { inp.value = ""; box.querySelector(".img-url").hidden = true; setImage(box, url); };
+  test.onerror = () => toast("No se pudo abrir esa imagen. Copia la dirección de la imagen, no la de la página.");
+  test.src = url;
+}
+function imgBtns(url) {
+  return `<label class="btn small" style="cursor:pointer">${url ? "Cambiar foto" : "Subir foto"}<input type="file" accept="image/*" hidden></label>
+    <button type="button" class="btn small" data-pasteurl>Pegar enlace</button>${url ? `<button type="button" class="btn small danger" data-rmimg>Quitar</button>` : ""}`;
+}
 function setImage(box, url) {
   box.querySelector("input[type=hidden]").value = url;
   box.querySelector(".preview").outerHTML = url ? `<img class="preview" src="${esc(url)}" alt="">` : `<div class="preview">Sin foto</div>`;
-  box.querySelector(".img-btns").innerHTML = `<label class="btn small" style="cursor:pointer">${url ? "Cambiar foto" : "Subir foto"}<input type="file" accept="image/*" hidden></label>${url ? `<button type="button" class="btn small danger" data-rmimg>Quitar</button>` : ""}`;
+  box.querySelector(".img-btns").innerHTML = imgBtns(url);
   box.querySelector("input[type=file]").addEventListener("change", (e) => uploadImage(e.target));
 }
 

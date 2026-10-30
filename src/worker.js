@@ -577,6 +577,7 @@ function validate(table, d) {
     if (d.starts_on && d.ends_on && d.ends_on < d.starts_on) return "La fecha de fin es antes de la de inicio.";
   }
   for (const f of ["link", "url"]) if (d[f] && !/^https?:\/\//.test(d[f])) return "Los enlaces deben empezar con https://";
+  for (const f of ["image", "logo"]) if (d[f] && !/^(\/img\/|https:\/\/)\S+$/.test(d[f])) return "El enlace de la foto debe empezar con https://";
   return null;
 }
 
