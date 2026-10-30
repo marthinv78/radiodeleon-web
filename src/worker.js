@@ -474,6 +474,19 @@ async function adminApi(req, env, url) {
   }
   if (p === "/me") return json({ ok: true }, 200, headers);
 
+  // Trae una foto de otro sitio para armar las imágenes de redes en el panel
+  // (el navegador no deja dibujar fotos de otros sitios si no pasan por aquí)
+  if (p === "/proxy" && req.method === "GET") {
+    const src = url.searchParams.get("url") || "";
+    if (!/^https:\/\/\S+$/.test(src)) return bad("Enlace de foto no válido.");
+    const r = await fetch(src, { headers: { "user-agent": "RadioDeLeon/1.0" } }).catch(() => null);
+    const type = (r && r.headers.get("content-type")) || "";
+    if (!r || !r.ok || !type.startsWith("image/")) return bad("No se pudo traer esa foto.", 502);
+    const buf = await r.arrayBuffer();
+    if (buf.byteLength > 2 * MAX_IMAGE_BYTES) return bad("La foto pesa demasiado.");
+    return new Response(buf, { headers: { "content-type": type, "cache-control": "private, max-age=3600" } });
+  }
+
   if (p === "/upload" && req.method === "POST") {
     const type = (req.headers.get("content-type") || "").split(";")[0];
     const ext = { "image/webp": "webp", "image/jpeg": "jpg", "image/png": "png" }[type];
