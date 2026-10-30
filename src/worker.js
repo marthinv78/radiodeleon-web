@@ -11,7 +11,7 @@
 
 const TABLES = {
   posts: {
-    fields: ["slug", "title", "excerpt", "body", "category", "image", "published", "published_at"],
+    fields: ["slug", "title", "excerpt", "body", "category", "extra_categories", "image", "published", "published_at"],
     order: "COALESCE(published_at, created_at) DESC",
   },
   shows: {
@@ -62,7 +62,8 @@ async function ensureEvents(env) {
   }
   eventsReady = true;
 }
-// Columnas de notas para saber si ya se publicaron en Facebook e Instagram
+// Columnas nuevas de notas: si ya se publicaron en Facebook e Instagram,
+// y otras secciones donde también aparece ("|La radio|Música|")
 let postsReady = false;
 async function ensurePosts(env) {
   if (postsReady) return;
@@ -70,6 +71,7 @@ async function ensurePosts(env) {
     "ALTER TABLE posts ADD COLUMN social_fb TEXT",
     "ALTER TABLE posts ADD COLUMN social_ig TEXT",
     "ALTER TABLE posts ADD COLUMN social_error TEXT",
+    "ALTER TABLE posts ADD COLUMN extra_categories TEXT",
   ]) {
     try { await env.DB.prepare(sql).run(); }
     catch (e) { if (!/duplicate column/i.test(String(e.message || e))) throw e; }
@@ -103,6 +105,15 @@ const SECTIONS = [
   { name: "La radio", group: "Radio de León" },
   { name: "Programación", group: "Radio de León" },
 ].map((s) => ({ ...s, slug: slugify(s.name) }));
+// Secciones extra de una nota, sin repetir la principal
+const extraCats = (p) => String(p.extra_categories || "").split("|").filter((c) => c && c !== p.category);
+const allCats = (p) => [p.category || "Noticias", ...extraCats(p)];
+// Guarda las secciones extra como "|La radio|Música|" para poder buscarlas con LIKE
+function packExtraCats(v, main) {
+  const names = [...new Set(String(v || "").split(/[|,]/).map((x) => x.trim()))]
+    .filter((x) => x && x !== main && SECTIONS.some((s) => s.name === x));
+  return names.length ? `|${names.join("|")}|` : null;
+}
 const SETTINGS_KEYS = ["whatsapp", "email", "facebook", "instagram", "tiktok", "youtube", "about"];
 const SESSION_DAYS = 30;
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
@@ -254,12 +265,12 @@ async function eventPage(env, url, shell, id, canonical, set, link) {
 }
 
 function articleHtml(p) {
-  const sec = SECTIONS.find((s) => s.name === p.category);
+  const catLink = (c) => { const sec = SECTIONS.find((s) => s.name === c); return sec ? `<a href="/seccion/${sec.slug}" data-link>${escHtml(sec.name)}</a>` : escHtml(c); };
   const fecha = new Date(p.published_at || p.created_at).toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric", timeZone: "America/Mexico_City" });
   return `<article class="sec article">
       <a class="back" href="/noticias" data-link>← Todas las noticias</a>
       ${p.image ? `<div class="article-hero"><img src="${escHtml(p.image)}" alt=""></div>` : ""}
-      <div class="eyebrow" style="margin-top:22px">${sec ? `<a href="/seccion/${sec.slug}" data-link>${escHtml(sec.name)}</a>` : escHtml(p.category || "Noticias")} · ${fecha}</div>
+      <div class="eyebrow" style="margin-top:22px">${allCats(p).map(catLink).join(" · ")} · ${fecha}</div>
       <h1>${escHtml(p.title)}</h1>
       ${p.excerpt ? `<p class="lead">${escHtml(p.excerpt)}</p>` : ""}
       <div class="prose">${md(p.body)}</div>
@@ -301,7 +312,7 @@ async function rss(env, url) {
   <link>${link}</link>
   <guid isPermaLink="true">${link}</guid>
   <pubDate>${new Date(p.published_at || p.created_at).toUTCString()}</pubDate>
-  <category>${escHtml(p.category || "Noticias")}</category>
+  ${allCats(p).map((c) => `<category>${escHtml(c)}</category>`).join("\n  ")}
   <description>${escHtml(p.excerpt || "")}</description>
   <content:encoded><![CDATA[${md(p.body).replace(/]]>/g, "]]]]><![CDATA[>")}]]></content:encoded>${img ? `\n  <media:content url="${escHtml(img)}" medium="image"/>` : ""}
 </item>`;
@@ -389,11 +400,12 @@ async function publicApi(req, env, url) {
 }
 
 async function listPosts(env, limit, offset, category = null) {
-  const where = category ? "published = 1 AND category = ?" : "published = 1";
+  await ensurePosts(env);
+  const where = category ? "published = 1 AND (category = ? OR extra_categories LIKE ?)" : "published = 1";
   const r = await env.DB.prepare(
-    `SELECT id, slug, title, excerpt, category, image, published_at, created_at
+    `SELECT id, slug, title, excerpt, category, extra_categories, image, published_at, created_at
      FROM posts WHERE ${where} ORDER BY ${TABLES.posts.order} LIMIT ? OFFSET ?`
-  ).bind(...(category ? [category] : []), limit, offset).all();
+  ).bind(...(category ? [category, `%|${category}|%`] : []), limit, offset).all();
   return r.results;
 }
 
@@ -419,8 +431,10 @@ async function bannerViews(req, env) {
 }
 
 async function sectionsWithCount(env) {
-  const r = await env.DB.prepare("SELECT category, COUNT(*) AS n FROM posts WHERE published = 1 GROUP BY category").all();
-  const counts = Object.fromEntries(r.results.map((x) => [x.category, x.n]));
+  await ensurePosts(env);
+  const r = await env.DB.prepare("SELECT category, extra_categories FROM posts WHERE published = 1").all();
+  const counts = {};
+  for (const p of r.results) for (const c of allCats(p)) counts[c] = (counts[c] || 0) + 1;
   return SECTIONS.map((s) => ({ ...s, count: counts[s.name] || 0 }));
 }
 
@@ -566,6 +580,10 @@ async function adminApi(req, env, url) {
       data.published = data.published && !(editor && env.EDITOR_AUTOPUBLISH !== "1") ? 1 : 0;
     }
     if (table === "posts") {
+      if ("extra_categories" in data) {
+        const prev = !("category" in data) && id ? await env.DB.prepare("SELECT category FROM posts WHERE id = ?").bind(id).first() : null;
+        data.extra_categories = packExtraCats(data.extra_categories, "category" in data ? data.category : prev && prev.category);
+      }
       if (!data.slug) data.slug = slugify(data.title);
       data.slug = await uniqueSlug(env, slugify(data.slug), id);
       if (data.published && !data.published_at) {
@@ -611,7 +629,7 @@ async function graph(env, path, params) {
 }
 const tag = (s) => "#" + String(s || "").replace(/[^\p{L}\p{N}]+/gu, "");
 function socialCaption(post, forInstagram) {
-  const tags = ["#RadioDeLeón", ...(post.category ? [tag(post.category)] : []), "#León", "#Guanajuato"].join(" ");
+  const tags = [...new Set(["#RadioDeLeón", ...(post.category ? [tag(post.category)] : []), ...extraCats(post).map(tag), "#León", "#Guanajuato"])].join(" ");
   const more = forInstagram ? "Lee la nota completa en radiodeleon.com (enlace en nuestro perfil)." : "";
   return [post.title, post.excerpt, more, tags].filter(Boolean).join("\n\n");
 }

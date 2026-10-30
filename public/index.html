@@ -636,6 +636,8 @@ async function loadSections() {
   if (!SECTIONS) SECTIONS = await api("/api/sections");
   return SECTIONS;
 }
+// Sección principal y las otras donde también aparece la nota
+const allCats = (p) => [p.category || "Noticias", ...String(p.extra_categories || "").split("|").filter((c) => c && c !== p.category)];
 function catLink(cat) {
   const sec = (SECTIONS || []).find((s) => s.name === cat);
   return sec ? `<a href="/seccion/${sec.slug}" data-link>${esc(sec.name)}</a>` : esc(cat || "Noticias");
@@ -730,7 +732,7 @@ const VIEWS = {
     return `<div class="sec article-wrap"><article class="article">
       <a class="back" href="/noticias" data-link>← Todas las noticias</a>
       ${p.image ? `<div class="article-hero"><img src="${esc(p.image)}" alt=""></div>` : ""}
-      <div class="eyebrow" style="margin-top:22px">${catLink(p.category)} · ${fechaLarga(p.published_at || p.created_at)}</div>
+      <div class="eyebrow" style="margin-top:22px">${allCats(p).map(catLink).join(" · ")} · ${fechaLarga(p.published_at || p.created_at)}</div>
       <h1>${esc(p.title)}</h1>
       ${p.excerpt ? `<p class="lead">${esc(p.excerpt)}</p>` : ""}
       <div class="prose">${withAdInText(md(p.body), p.category)}</div>
