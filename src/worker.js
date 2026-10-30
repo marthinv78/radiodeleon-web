@@ -27,6 +27,23 @@ const TABLES = {
     order: "sort, id",
   },
 };
+// Secciones del portal. La categoría de cada nota debe ser uno de estos nombres.
+const SECTIONS = [
+  { name: "Cine", group: "Cultura y espectáculos" },
+  { name: "Teatro", group: "Cultura y espectáculos" },
+  { name: "Espectáculos", group: "Cultura y espectáculos" },
+  { name: "Música", group: "Cultura y espectáculos" },
+  { name: "Cultura", group: "Cultura y espectáculos" },
+  { name: "Moda", group: "Estilo y bienestar" },
+  { name: "Mujer", group: "Estilo y bienestar" },
+  { name: "Psicología", group: "Estilo y bienestar" },
+  { name: "Historia", group: "León y su gente" },
+  { name: "León", group: "León y su gente" },
+  { name: "Fundaciones", group: "León y su gente" },
+  { name: "Comunidad", group: "León y su gente" },
+  { name: "La radio", group: "Radio de León" },
+  { name: "Programación", group: "Radio de León" },
+].map((s) => ({ ...s, slug: slugify(s.name) }));
 const SETTINGS_KEYS = ["whatsapp", "email", "facebook", "instagram", "tiktok", "youtube", "about"];
 const SESSION_DAYS = 30;
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
@@ -78,7 +95,10 @@ async function servePage(req, env, url) {
     let rw = new HTMLRewriter()
       .on('link[rel="canonical"]', link)
       .on('meta[property="og:url"]', set(canonical));
-    const name = PAGE_TITLES[url.pathname.replace(/\/+$/, "")];
+    const sm = url.pathname.match(/^\/seccion\/([a-z0-9-]+)\/?$/);
+    const sec = sm && SECTIONS.find((s) => s.slug === sm[1]);
+    if (sm && !sec) return new Response(shell.body, { status: 404, headers: shell.headers });
+    const name = sec ? sec.name : PAGE_TITLES[url.pathname.replace(/\/+$/, "")];
     if (name) rw = rw.on("title", { element(el) { el.setInnerContent(`${name} · ${SITE_NAME}`); } });
     return rw.transform(new Response(shell.body, { status: 200, headers: shell.headers }));
   }
@@ -129,11 +149,12 @@ async function servePage(req, env, url) {
 }
 
 function articleHtml(p) {
+  const sec = SECTIONS.find((s) => s.name === p.category);
   const fecha = new Date(p.published_at || p.created_at).toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric", timeZone: "America/Mexico_City" });
   return `<article class="sec article">
       <a class="back" href="/noticias" data-link>← Todas las noticias</a>
       ${p.image ? `<div class="article-hero"><img src="${escHtml(p.image)}" alt=""></div>` : ""}
-      <div class="eyebrow" style="margin-top:22px">${escHtml(p.category || "Noticias")} · ${fecha}</div>
+      <div class="eyebrow" style="margin-top:22px">${sec ? `<a href="/seccion/${sec.slug}" data-link>${escHtml(sec.name)}</a>` : escHtml(p.category || "Noticias")} · ${fecha}</div>
       <h1>${escHtml(p.title)}</h1>
       ${p.excerpt ? `<p class="lead">${escHtml(p.excerpt)}</p>` : ""}
       <div class="prose">${md(p.body)}</div>
@@ -152,7 +173,8 @@ async function sitemap(env, url) {
   const r = await env.DB.prepare(
     `SELECT slug, updated_at, published_at, created_at FROM posts WHERE published = 1 ORDER BY ${TABLES.posts.order} LIMIT 5000`
   ).all();
-  const pages = ["/", ...Object.keys(PAGE_TITLES)].map((p) => `<url><loc>${url.origin}${p}</loc></url>`);
+  const secs = (await sectionsWithCount(env)).filter((s) => s.count).map((s) => `/seccion/${s.slug}`);
+  const pages = ["/", ...Object.keys(PAGE_TITLES), ...secs].map((p) => `<url><loc>${url.origin}${p}</loc></url>`);
   const posts = r.results.map((p) =>
     `<url><loc>${url.origin}/nota/${p.slug}</loc><lastmod>${escHtml(p.updated_at || p.published_at || p.created_at)}</lastmod></url>`);
   const body = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${[...pages, ...posts].join("\n")}\n</urlset>\n`;
@@ -213,8 +235,10 @@ async function publicApi(req, env, url) {
   if (p === "/api/posts") {
     const limit = clampInt(url.searchParams.get("limit"), 1, 50, 12);
     const offset = clampInt(url.searchParams.get("offset"), 0, 100000, 0);
-    return json(await listPosts(env, limit, offset), 200, cache);
+    const sec = SECTIONS.find((s) => s.slug === url.searchParams.get("seccion"));
+    return json(await listPosts(env, limit, offset, sec && sec.name), 200, cache);
   }
+  if (p === "/api/sections") return json(await sectionsWithCount(env), 200, cache);
   let m = p.match(/^\/api\/posts\/([a-z0-9-]+)$/);
   if (m) {
     const post = await env.DB.prepare("SELECT * FROM posts WHERE slug = ? AND published = 1").bind(m[1]).first();
@@ -239,12 +263,19 @@ async function publicApi(req, env, url) {
   return bad("No encontrado", 404);
 }
 
-async function listPosts(env, limit, offset) {
+async function listPosts(env, limit, offset, category = null) {
+  const where = category ? "published = 1 AND category = ?" : "published = 1";
   const r = await env.DB.prepare(
     `SELECT id, slug, title, excerpt, category, image, published_at, created_at
-     FROM posts WHERE published = 1 ORDER BY ${TABLES.posts.order} LIMIT ? OFFSET ?`
-  ).bind(limit, offset).all();
+     FROM posts WHERE ${where} ORDER BY ${TABLES.posts.order} LIMIT ? OFFSET ?`
+  ).bind(...(category ? [category] : []), limit, offset).all();
   return r.results;
+}
+
+async function sectionsWithCount(env) {
+  const r = await env.DB.prepare("SELECT category, COUNT(*) AS n FROM posts WHERE published = 1 GROUP BY category").all();
+  const counts = Object.fromEntries(r.results.map((x) => [x.category, x.n]));
+  return SECTIONS.map((s) => ({ ...s, count: counts[s.name] || 0 }));
 }
 
 async function getSettings(env) {

@@ -81,6 +81,10 @@ const file = process.argv[2];
 if (!file) die("Uso: node editorial/publicar.mjs <nota.md>  |  --listar");
 const { meta, body } = parse(await readFile(file, "utf8"));
 for (const k of ["titulo", "categoria", "resumen"]) if (!meta[k]) die(`Falta "${k}" en el bloque de datos.`);
+const sections = await (await fetch(`${BASE}/api/sections`)).json();
+if (!sections.some((s) => s.name === meta.categoria)) {
+  die(`"${meta.categoria}" no es una sección del portal. Usa una de: ${sections.map((s) => s.name).join(", ")}.`);
+}
 if (meta.fuentes.length === 0) die("Toda nota necesita al menos una fuente.");
 if (body.split(/\s+/).length < 300) die("La nota es muy corta (mínimo 300 palabras).");
 

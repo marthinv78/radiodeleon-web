@@ -191,6 +191,12 @@ main{margin-left:var(--side);min-height:100%;padding-bottom:40px}
 .days{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px}
 .days button{border:1px solid var(--line);background:none;border-radius:999px;padding:7px 14px;cursor:pointer;font-family:var(--font-mono);font-size:12px;color:var(--muted)}
 .days button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:22px}
+.chips a{border:1px solid var(--line);border-radius:999px;padding:7px 14px;font-family:var(--font-mono);font-size:12px;color:var(--muted);text-decoration:none;white-space:nowrap}
+.chips a:hover{border-color:var(--ink);color:var(--ink)}
+.chips a[aria-current]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chips a span{opacity:.6;margin-left:4px}
+.eyebrow a{color:inherit}
 .show-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
 .show-card{background:var(--surface);border-radius:var(--radius);overflow:hidden;min-width:0}
 .show-card img,.show-card .ph{width:100%;aspect-ratio:4/3;object-fit:cover;background:var(--surface-2)}
@@ -518,6 +524,38 @@ function sponsorsBlock(list) {
 }
 const footer = () => `<footer><span>© ${new Date().getFullYear()} Radio de León · Tu música, tus recuerdos · León, Guanajuato</span><span>Hecho por Nano Studio</span></footer>`;
 
+let SECTIONS = null;
+async function loadSections() {
+  if (!SECTIONS) SECTIONS = await api("/api/sections");
+  return SECTIONS;
+}
+function catLink(cat) {
+  const sec = (SECTIONS || []).find((s) => s.name === cat);
+  return sec ? `<a href="/seccion/${sec.slug}" data-link>${esc(sec.name)}</a>` : esc(cat || "Noticias");
+}
+// Pastillas con las secciones que ya tienen notas
+function chips(sections, current, title) {
+  const list = sections.filter((s) => s.count);
+  if (!list.length) return "";
+  const a = (href, label, on, n) => `<a href="${href}" data-link${on ? ' aria-current="page"' : ""}>${esc(label)}${n ? `<span>${n}</span>` : ""}</a>`;
+  return `${title ? `<section class="sec"><div class="sec-head"><h2>${title}</h2></div>` : ""}<nav class="chips" aria-label="Secciones">
+    ${a("/noticias", "Todas", !current && !title)}${list.map((s) => a(`/seccion/${s.slug}`, s.name, s.slug === current, s.count)).join("")}
+  </nav>${title ? "</section>" : ""}`;
+}
+async function newsList(slug) {
+  const sections = await loadSections();
+  const sec = slug && sections.find((s) => s.slug === slug);
+  if (slug && !sec) throw new Error("Esa sección no existe");
+  const q = sec ? `&seccion=${sec.slug}` : "";
+  const posts = await api(`/api/posts?limit=12${q}`);
+  if (sec) document.title = `${sec.name} · Radio de León`;
+  return `<section class="sec"><div class="sec-head"><h1>${sec ? esc(sec.name) : "Noticias"}</h1><span class="eyebrow">${sec ? esc(sec.group) : "Radio de León"}</span></div>
+      ${chips(sections, slug)}
+      ${posts.length ? `<div class="mosaic" id="newsList">${posts.map(newsCard).join("")}</div>` : `<p class="empty">Pronto publicaremos notas en esta sección.</p>`}
+      ${posts.length === 12 ? `<div class="more-wrap"><button class="btn ghost" id="moreBtn" data-offset="12" data-seccion="${sec ? sec.slug : ""}">Cargar más noticias</button></div>` : ""}
+    </section>${footer()}`;
+}
+
 const VIEWS = {
   async home() {
     const h = await loadHome();
@@ -527,6 +565,7 @@ const VIEWS = {
       <section class="sec"><div class="sec-head"><h1>Lo último</h1><a href="/noticias" data-link>Ver todas las noticias →</a></div>
         ${h.posts.length ? `<div class="mosaic">${h.posts.slice(0, 6).map(newsCard).join("")}</div>` : `<p class="empty">Pronto publicaremos noticias.</p>`}
       </section>
+      ${chips(await loadSections(), null, "Explora por sección")}
       ${todayShows.length ? `<section class="sec"><div class="sec-head"><h2>Hoy en la radio</h2><a href="/programas" data-link>Toda la programación →</a></div>
         <div class="today">${todayShows.map(slotRow).join("")}</div></section>` : ""}
       ${h.events.length ? `<section class="sec"><div class="sec-head"><h2>Próximos eventos</h2><a href="/eventos" data-link>Ver eventos →</a></div>
@@ -536,20 +575,19 @@ const VIEWS = {
       ${footer()}`;
   },
   async noticias() {
-    const posts = await api("/api/posts?limit=12");
-    return `<section class="sec"><div class="sec-head"><h1>Noticias</h1><span class="eyebrow">Radio de León</span></div>
-      ${posts.length ? `<div class="mosaic" id="newsList">${posts.map(newsCard).join("")}</div>` : `<p class="empty">Pronto publicaremos noticias.</p>`}
-      ${posts.length === 12 ? `<div class="more-wrap"><button class="btn ghost" id="moreBtn" data-offset="12">Cargar más noticias</button></div>` : ""}
-    </section>${footer()}`;
+    return newsList(null);
+  },
+  async seccion(slug) {
+    return newsList(slug);
   },
   async nota(slug) {
-    const p = await api(`/api/posts/${encodeURIComponent(slug)}`);
+    const [p] = await Promise.all([api(`/api/posts/${encodeURIComponent(slug)}`), loadSections()]);
     document.title = `${p.title} · Radio de León`;
     const url = location.href;
     return `<article class="sec article">
       <a class="back" href="/noticias" data-link>← Todas las noticias</a>
       ${p.image ? `<div class="article-hero"><img src="${esc(p.image)}" alt=""></div>` : ""}
-      <div class="eyebrow" style="margin-top:22px">${esc(p.category || "Noticias")} · ${fechaLarga(p.published_at || p.created_at)}</div>
+      <div class="eyebrow" style="margin-top:22px">${catLink(p.category)} · ${fechaLarga(p.published_at || p.created_at)}</div>
       <h1>${esc(p.title)}</h1>
       ${p.excerpt ? `<p class="lead">${esc(p.excerpt)}</p>` : ""}
       <div class="prose">${md(p.body)}</div>
@@ -600,12 +638,14 @@ async function route() {
   const path = location.pathname.replace(/\/+$/, "") || "/";
   let view = "home", arg = null;
   const m = path.match(/^\/nota\/([a-z0-9-]+)$/);
+  const sm = path.match(/^\/seccion\/([a-z0-9-]+)$/);
   if (m) { view = "nota"; arg = m[1]; }
+  else if (sm) { view = "seccion"; arg = sm[1]; }
   else if (path !== "/") view = path.slice(1);
   if (!VIEWS[view]) view = "home";
-  $$(".nav a").forEach((a) => a.toggleAttribute("aria-current", (a.getAttribute("href") === path) || (view === "nota" && a.getAttribute("href") === "/noticias")));
+  $$(".nav a").forEach((a) => a.toggleAttribute("aria-current", (a.getAttribute("href") === path) || ((view === "nota" || view === "seccion") && a.getAttribute("href") === "/noticias")));
   $$(".nav a[aria-current]").forEach((a) => a.setAttribute("aria-current", "page"));
-  if (view !== "nota") document.title = view === "home" ? "Radio de León" : `${view[0].toUpperCase() + view.slice(1)} · Radio de León`;
+  if (view !== "nota" && view !== "seccion") document.title = view === "home" ? "Radio de León" : `${view[0].toUpperCase() + view.slice(1)} · Radio de León`;
   const el = $("#view");
   try { el.innerHTML = await VIEWS[view](arg); }
   catch (e) { el.innerHTML = `<section class="sec"><p class="empty">${esc(e.message)}. <a href="/" data-link>Volver al inicio</a></p></section>`; }
@@ -636,7 +676,8 @@ document.addEventListener("click", async (e) => {
   }
   if (e.target.id === "moreBtn") {
     const off = +e.target.dataset.offset;
-    const more = await api(`/api/posts?limit=12&offset=${off}`);
+    const sec = e.target.dataset.seccion;
+    const more = await api(`/api/posts?limit=12&offset=${off}${sec ? `&seccion=${sec}` : ""}`);
     $("#newsList").insertAdjacentHTML("beforeend", more.map(newsCard).join(""));
     if (more.length < 12) e.target.remove(); else e.target.dataset.offset = off + 12;
   }

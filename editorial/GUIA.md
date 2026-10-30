@@ -20,7 +20,12 @@ Gente adulta de León y del Bajío con interés intelectual medio-alto. Lee, va 
 | **Cine** | Estrenos con criterio, clásicos, cine mexicano, festivales (GIFF, Morelia, Cannes) | Reseñas sin spoilers, "5 películas para entender…" |
 | **Teatro** | Cartelera, obras, compañías, el Teatro del Bicentenario, el Teatro Manuel Doblado | Previas de obras, entrevistas, historia de recintos |
 | **Espectáculos** | Conciertos, danza, ópera, ferias, la Feria de León, el Festival Internacional del Globo y el Festival Internacional Cervantino | Agenda comentada, previas de conciertos |
+| **Música** | Géneros, discos, artistas, historia de canciones, música de León | "La historia detrás de…", artistas leoneses, aniversarios de discos |
 | **Cultura** | Libros, arte, museos, gastronomía con historia | Exposiciones en el Museo de Arte e Historia de Guanajuato, libros del mes |
+| **León** | La ciudad: personajes, barrios, tradiciones, economía, gastronomía | El barrio de San Juan de Dios, la historia del Arco de la Calzada |
+| **Comunidad** | Iniciativas ciudadanas, colectivos, talento local | Proyectos de vecinos, artistas emergentes de León |
+
+La categoría de cada nota debe ser **exactamente** uno de estos nombres; si no, el script la rechaza. Las secciones **La radio** y **Programación** también existen en el portal, pero son para avisos de la propia radio y el agente no las usa.
 
 En cada tanda de notas **rota las secciones** y no repitas la sección de la nota anterior. Siempre que se pueda, dale **un ángulo local**: León, Guanajuato o el Bajío.
 
