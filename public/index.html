@@ -175,6 +175,8 @@ main{margin-left:var(--side);min-height:100%;padding-bottom:40px}
 .prose h3{font-size:24px;font-weight:800;text-transform:uppercase;margin:36px 0 12px}
 .prose ul{padding-left:1.2em;margin:0 0 1.1em}
 .prose a{overflow-wrap:anywhere}
+/* Texto justificado: bordes parejos a los dos lados. La división de palabras evita huecos grandes en celular */
+.prose p,.prose li,.article .lead,.event-sum,.show-card p{text-align:justify;-webkit-hyphens:auto;hyphens:auto;hyphenate-limit-chars:7 3 3;text-wrap:pretty}
 .share{display:flex;gap:10px;flex-wrap:wrap;margin-top:30px;padding-top:20px;border-top:1px solid var(--line)}
 .back{display:inline-flex;gap:8px;font-family:var(--font-mono);font-size:13px;text-decoration:none;color:var(--muted);margin-bottom:22px}
 .back:hover{color:var(--ink)}
