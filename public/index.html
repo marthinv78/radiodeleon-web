@@ -493,11 +493,13 @@ const ICONS = {
   youtube: '<rect x="2" y="5" width="20" height="14" rx="4" fill="currentColor"/><path d="M10 9v6l5-3z" fill="var(--surface)"/>',
   whatsapp: '<path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm5.3 14.2c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .3-3.4-.7-2.9-1.2-4.7-4.1-4.9-4.3-.1-.2-1.2-1.6-1.2-3s.8-2.2 1-2.5c.3-.3.6-.4.8-.4h.6c.2 0 .4 0 .6.5l.9 2.1c.1.2.1.4 0 .5l-.3.5-.4.5c-.2.2-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.2 1 2.1 1.4 2.4 1.5.3.1.5.1.7-.1l.9-1.1c.2-.3.4-.2.7-.1l2 1c.3.1.5.2.5.3.1.2.1.7-.1 1.3Z" fill="currentColor"/>',
 };
+// wa.me necesita el número con lada de país: a los de 10 dígitos les agrega el 52 de México
+const waNumber = (v) => { const d = String(v || "").replace(/\D/g, ""); return d.length === 10 ? "52" + d : d; };
 function socialUrl(k, v) {
   if (!v) return "";
   if (/^https?:\/\//.test(v)) return v;
   const h = v.replace(/^@/, "");
-  return { facebook: `https://facebook.com/${h}`, instagram: `https://instagram.com/${h}`, tiktok: `https://www.tiktok.com/@${h}`, youtube: `https://youtube.com/@${h}`, whatsapp: `https://wa.me/${h.replace(/\D/g, "")}` }[k];
+  return { facebook: `https://facebook.com/${h}`, instagram: `https://instagram.com/${h}`, tiktok: `https://www.tiktok.com/@${h}`, youtube: `https://youtube.com/@${h}`, whatsapp: `https://wa.me/${waNumber(h)}` }[k];
 }
 function renderSocials(st) {
   $("#socials").innerHTML = ["whatsapp", "facebook", "instagram", "tiktok", "youtube"].filter((k) => st[k]).map((k) =>
@@ -557,7 +559,7 @@ function bannerHtml(slot, section, cls) {
   const wa = HOME && HOME.settings && HOME.settings.whatsapp;
   if (!wa || (slot !== "portada" && slot !== "radio")) return "";
   const msg = encodeURIComponent("Hola, quiero anunciarme en Radio de León");
-  return `<a class="ad ad-house ${cls}" href="https://wa.me/${esc(String(wa).replace(/\D/g, ""))}?text=${msg}" target="_blank" rel="noopener"><b>Anúnciate aquí</b><span>Tu marca frente a la audiencia de Radio de León</span></a>`;
+  return `<a class="ad ad-house ${cls}" href="https://wa.me/${waNumber(wa)}?text=${msg}" target="_blank" rel="noopener"><b>Anúnciate aquí</b><span>Tu marca frente a la audiencia de Radio de León</span></a>`;
 }
 // Cuenta una vista por cada banner mostrado (sin cookies ni datos personales)
 function countAdViews(root) {
@@ -713,7 +715,7 @@ async function route() {
   try { el.innerHTML = await VIEWS[view](arg); }
   catch (e) { el.innerHTML = `<section class="sec"><p class="empty">${esc(e.message)}. <a href="/" data-link>Volver al inicio</a></p></section>`; }
   countAdViews(el);
-  loadBanners().then(renderSideAd);
+  Promise.all([loadBanners(), loadHome()]).then(renderSideAd).catch(() => {});
   if ($("#history") && NP) renderHistory();
   if (view === "programas" && HOME && HOME.shows.length) renderDay(mxNow().day);
 }
