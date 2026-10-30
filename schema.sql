@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS sponsors (
   updated_at TEXT NOT NULL
 );
 
--- Banners de anunciantes y eventos. slot: portada | noticias | nota | radio
+-- Banners de anunciantes y eventos. slot: portada | noticias | nota | lateral | radio
 -- section: vacío = todas las secciones; o el nombre de una sección (Cine, Moda…)
 CREATE TABLE IF NOT EXISTS banners (
   id INTEGER PRIMARY KEY AUTOINCREMENT,

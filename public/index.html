@@ -165,13 +165,13 @@ main{margin-left:var(--side);min-height:100%;padding-bottom:40px}
 .more-wrap{display:flex;justify-content:center;margin-top:24px}
 
 /* Nota */
-.article{max-width:760px}
+.article{max-width:700px;min-width:0}
 .article-hero{border-radius:var(--radius);overflow:hidden;aspect-ratio:16/9;background:var(--surface-2);max-width:100%}
 .article-hero img{width:100%;height:100%;object-fit:cover}
 .article h1{font-size:clamp(32px,5.4vw,58px);font-weight:900;text-transform:uppercase;margin:16px 0 18px}
 .article .lead{font-size:21px;color:var(--muted);margin:0 0 26px}
 .prose{font-size:19px;line-height:1.7}
-.prose p{margin:0 0 1.1em;max-width:65ch}
+.prose p{margin:0 0 1.1em}
 .prose h3{font-size:24px;font-weight:800;text-transform:uppercase;margin:36px 0 12px}
 .prose ul{padding-left:1.2em;margin:0 0 1.1em}
 .prose a{overflow-wrap:anywhere}
@@ -180,6 +180,24 @@ main{margin-left:var(--side);min-height:100%;padding-bottom:40px}
 .share{display:flex;gap:10px;flex-wrap:wrap;margin-top:30px;padding-top:20px;border-top:1px solid var(--line)}
 .back{display:inline-flex;gap:8px;font-family:var(--font-mono);font-size:13px;text-decoration:none;color:var(--muted);margin-bottom:22px}
 .back:hover{color:var(--ink)}
+/* Nota con columna lateral: al lado en pantallas anchas, abajo en celular */
+.article-wrap{display:grid;grid-template-columns:minmax(0,700px);gap:40px}
+.article-side{display:flex;flex-direction:column;gap:32px;min-width:0;max-width:700px}
+@media (min-width:1260px){.article-wrap{grid-template-columns:minmax(0,700px) 300px;gap:48px}.article-side{padding-top:56px}}
+.side-block h2{font-size:20px;font-weight:900;text-transform:uppercase;border-bottom:2px solid var(--ink);padding-bottom:8px;margin-bottom:6px}
+.side-list{list-style:none;margin:0;padding:0}
+.side-list a{display:grid;grid-template-columns:84px minmax(0,1fr);gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line);text-decoration:none;color:inherit}
+.side-list a:hover b{text-decoration:underline}
+.side-list .thumb{width:84px;aspect-ratio:4/3;border-radius:8px;object-fit:cover;background:var(--surface-2)}
+.side-list .date-chip{width:84px;aspect-ratio:4/3;border-radius:8px;background:var(--cantera);color:var(--on-accent);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.side-list .date-chip b{font-family:var(--font-display);font-size:24px;font-weight:900;line-height:1;text-decoration:none}
+.side-list .date-chip span{font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase}
+.side-list .t b{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;font-family:var(--font-display);font-size:16px;font-weight:800;text-transform:uppercase;line-height:1.1}
+.side-list .t small{display:block;margin-top:4px;font-family:var(--font-mono);font-size:11px;color:var(--muted)}
+.side-more{display:inline-block;margin-top:10px;font-family:var(--font-mono);font-size:13px;color:var(--cantera);text-decoration:none}
+.ad-tall{aspect-ratio:1/2;width:100%;max-width:300px;margin:0 auto}
+.ad-tall.ad-house{aspect-ratio:auto;max-width:none}
+@media (min-width:1260px){.side-sticky{position:sticky;top:24px}.ad-tall.ad-house{min-height:320px;flex-direction:column;align-items:flex-start;justify-content:space-between}}
 
 /* Programas */
 .today{display:grid;gap:10px}
@@ -597,7 +615,7 @@ function bannerHtml(slot, section, cls) {
   if (b) return `<a class="ad ${cls}" href="/b/${b.id}" target="_blank" rel="noopener sponsored" data-ad="${b.id}"><img src="${esc(b.image)}" alt="${esc(b.name)}" loading="lazy"><span class="ad-tag">Publicidad</span></a>`;
   // Espacio libre en portada y junto a la radio: se ofrece a anunciantes
   const wa = HOME && HOME.settings && HOME.settings.whatsapp;
-  if (!wa || (slot !== "portada" && slot !== "radio")) return "";
+  if (!wa || !["portada", "radio", "lateral"].includes(slot)) return "";
   const msg = encodeURIComponent("Hola, quiero anunciarme en Radio de León");
   return `<a class="ad ad-house ${cls}" href="https://wa.me/${waNumber(wa)}?text=${msg}" target="_blank" rel="noopener"><span class="ad-house-in"><span class="ad-kicker">Espacio disponible</span><b>${slot === "radio" ? "Tu marca aquí" : "Anúnciate en Radio de León"}</b><span class="ad-sub">Tu marca frente a nuestra audiencia, en León y donde nos escuchen.</span></span><span class="ad-cta">${slot === "radio" ? "Escríbenos →" : "Escríbenos por WhatsApp →"}</span></a>`;
 }
@@ -646,6 +664,26 @@ function withAdCard(cards, section) {
   const ad = `<a class="card ad-card" href="/b/${b.id}" target="_blank" rel="noopener sponsored" data-ad="${b.id}"><img src="${esc(b.image)}" alt="${esc(b.name)}" loading="lazy"><span class="ad-tag">Publicidad</span></a>`;
   return [...cards.slice(0, 3), ad, ...cards.slice(3)];
 }
+// Columna junto a la nota: más notas de la sección, próximos eventos y un banner que se queda a la vista
+async function articleSide(p) {
+  const sec = (SECTIONS || []).find((s) => s.name === p.category);
+  const [posts, ev] = await Promise.all([
+    api(`/api/posts?limit=5${sec ? `&seccion=${sec.slug}` : ""}`).catch(() => []),
+    api("/api/events").catch(() => ({ upcoming: [] })),
+  ]);
+  const more = posts.filter((x) => x.slug !== p.slug).slice(0, 4);
+  const events = (ev.upcoming || []).slice(0, 3);
+  const morePosts = more.length ? `<section class="side-block"><h2>Más de ${esc(sec ? sec.name : "Noticias")}</h2><ul class="side-list">
+    ${more.map((x) => `<li><a href="/nota/${esc(x.slug)}" data-link>${x.image ? `<img class="thumb" src="${esc(x.image)}" alt="" loading="lazy">` : `<span class="thumb"></span>`}
+      <span class="t"><b>${esc(x.title)}</b><small>${fechaLarga(x.published_at || x.created_at)}</small></span></a></li>`).join("")}</ul>
+    <a class="side-more" href="${sec ? `/seccion/${sec.slug}` : "/noticias"}" data-link>Ver todas →</a></section>` : "";
+  const upcoming = events.length ? `<section class="side-block"><h2>Próximos eventos</h2><ul class="side-list">
+    ${events.map((e) => { const { day, mon } = eventDate(e); return `<li><a href="/evento/${e.id}" data-link><span class="date-chip"><b>${day}</b><span>${esc(mon.replace(/ \d{4}$/, ""))}</span></span>
+      <span class="t"><b>${esc(e.title)}</b><small>${[e.time, e.place].filter(Boolean).map(esc).join(" · ")}</small></span></a></li>`; }).join("")}</ul>
+    <a class="side-more" href="/eventos" data-link>Ver cartelera →</a></section>` : "";
+  const ad = bannerHtml("lateral", p.category, "ad-tall");
+  return `<aside class="article-side" aria-label="Más para leer">${morePosts}${upcoming}${ad ? `<div class="side-sticky">${ad}</div>` : ""}</aside>`;
+}
 async function newsList(slug) {
   const [sections] = await Promise.all([loadSections(), loadBanners()]);
   const sec = slug && sections.find((s) => s.slug === slug);
@@ -689,7 +727,7 @@ const VIEWS = {
     const [p] = await Promise.all([api(`/api/posts/${encodeURIComponent(slug)}`), loadSections(), loadBanners()]);
     document.title = `${p.title} · Radio de León`;
     const url = location.href;
-    return `<article class="sec article">
+    return `<div class="sec article-wrap"><article class="article">
       <a class="back" href="/noticias" data-link>← Todas las noticias</a>
       ${p.image ? `<div class="article-hero"><img src="${esc(p.image)}" alt=""></div>` : ""}
       <div class="eyebrow" style="margin-top:22px">${catLink(p.category)} · ${fechaLarga(p.published_at || p.created_at)}</div>
@@ -700,7 +738,7 @@ const VIEWS = {
         <a class="btn wa" href="https://wa.me/?text=${encodeURIComponent(p.title + " " + url)}" target="_blank" rel="noopener">Compartir por WhatsApp</a>
         <button class="btn ghost" data-copy="${esc(url)}">Copiar enlace</button>
       </div>
-    </article>${footer()}`;
+    </article>${await articleSide(p)}</div>${footer()}`;
   },
   async evento(id) {
     const e = await api(`/api/events/${encodeURIComponent(id)}`);

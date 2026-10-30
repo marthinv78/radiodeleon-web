@@ -33,7 +33,7 @@ const TABLES = {
 };
 // Espacios para banners: portada (Inicio), noticias (tarjeta entre notas),
 // nota (a mitad del texto) y radio (junto al reproductor)
-const BANNER_SLOTS = ["portada", "noticias", "nota", "radio"];
+const BANNER_SLOTS = ["portada", "noticias", "nota", "lateral", "radio"];
 const BANNERS_SQL = `CREATE TABLE IF NOT EXISTS banners (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL,
