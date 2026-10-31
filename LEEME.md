@@ -200,6 +200,11 @@ Cada nota sale lista para buscadores y para compartir: título, resumen y foto e
 
 **Google Search Console:** ya está dado de alta (`radiodeleon.com` como dominio) y el `sitemap.xml` se envió el 30 de octubre de 2026 (estado *Correcto*). Para que Google lea pronto una nota importante, pega su enlace en *Inspeccionar las URL* y dale *Solicitar indexación*.
 
+## Correo hola@radiodeleon.com
+
+Con **Cloudflare Email Routing** (gratis): `hola@radiodeleon.com` y cualquier otra dirección del dominio (regla *catch-all*) se reenvían a `marthinv@gmail.com`. No es un buzón propio: los correos llegan a ese Gmail y, al contestar desde Gmail, la respuesta sale desde la cuenta de Gmail.
+Se administra en Cloudflare: **radiodeleon.com → Correo electrónico → Enrutamiento de correo electrónico**. Para un buzón propio que también envíe como `hola@` (Zoho Mail o Google Workspace) hay que apagar antes este enrutamiento, porque usan los mismos registros MX.
+
 ## Kit para anunciantes
 
 - **Página:** https://radiodeleon.com/anunciate (enlace "Anúnciate" abajo en todo el sitio). Los paquetes y precios están en `ADV_PACKS`, en `public/index.html`.
