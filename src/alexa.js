@@ -16,25 +16,33 @@ const TOKEN = "radiodeleon-en-vivo";
 
 export async function alexa(req, env) {
   const raw = new Uint8Array(await req.arrayBuffer());
-  const why = await fromAmazon(req, raw);
-  if (why) return reject(`Firma no válida (${why})`);
-  let body;
-  try { body = JSON.parse(new TextDecoder().decode(raw)); } catch { return reject("Datos inválidos"); }
+  const reject = async (msg) => { await note(env, `Rechazada: ${msg}`); return new Response(msg, { status: 400 }); };
+  try {
+    const why = await fromAmazon(req, raw);
+    if (why) return reject(`Firma no válida (${why})`);
+    let body;
+    try { body = JSON.parse(new TextDecoder().decode(raw)); } catch { return reject("Datos inválidos"); }
 
-  // La petición debe ser reciente (Amazon pide máximo 150 segundos)
-  if (Math.abs(Date.now() - Date.parse(body.request && body.request.timestamp)) > 150e3) return reject("Petición vencida");
-  const appId = (body.session && body.session.application && body.session.application.applicationId)
-    || (body.context && body.context.System && body.context.System.application && body.context.System.application.applicationId);
-  if (env.ALEXA_SKILL_ID && appId !== env.ALEXA_SKILL_ID) return reject(`Skill no reconocida: ${appId}`);
-  console.log("Alexa:", body.request && body.request.type, body.request && body.request.intent && body.request.intent.name);
+    // La petición debe ser reciente (Amazon pide máximo 150 segundos)
+    if (Math.abs(Date.now() - Date.parse(body.request && body.request.timestamp)) > 150e3) return reject("Petición vencida");
+    const appId = (body.session && body.session.application && body.session.application.applicationId)
+      || (body.context && body.context.System && body.context.System.application && body.context.System.application.applicationId);
+    if (env.ALEXA_SKILL_ID && appId !== env.ALEXA_SKILL_ID) return reject(`Skill no reconocida: ${appId}`);
 
-  return Response.json(await answer(body.request || {}));
+    const r = body.request || {};
+    await note(env, `Bien: ${r.type}${r.intent ? " " + r.intent.name : ""}`);
+    return Response.json(await answer(r));
+  } catch (e) { return reject(`Error: ${e.message}`); }
 }
 
-// El motivo queda en el registro de Cloudflare (Workers → radiodeleon-web → Logs)
-function reject(msg) {
-  console.warn("Alexa rechazada:", msg);
-  return new Response(msg, { status: 400 });
+// La última petición queda anotada para revisar desde el navegador en radiodeleon.com/alexa
+function note(env, msg) {
+  console.log("Alexa:", msg);
+  return env.IMAGES && env.IMAGES.put("alexa-ultima", `${new Date().toISOString()} · ${msg}`).catch(() => {});
+}
+export async function alexaStatus(env) {
+  const last = env.IMAGES && (await env.IMAGES.get("alexa-ultima"));
+  return new Response(`Esta dirección es para Alexa.\nÚltima petición: ${last || "ninguna todavía"}\n`, { headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store" } });
 }
 
 async function answer(r) {

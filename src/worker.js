@@ -10,7 +10,7 @@
 // - Alexa:         /alexa          (skill "Radio de León", ver src/alexa.js)
 // =============================================================
 
-import { alexa } from "./alexa.js";
+import { alexa, alexaStatus } from "./alexa.js";
 
 const TABLES = {
   posts: {
@@ -140,7 +140,7 @@ export default {
       return Response.redirect(`https://${MAIN_HOST}${p}${url.search}`, 301);
     }
     try {
-      if (p === "/alexa") return req.method === "POST" ? await alexa(req, env) : bad("Esta dirección es para Alexa.", 405);
+      if (p === "/alexa") return req.method === "POST" ? await alexa(req, env) : await alexaStatus(env);
       if (p.startsWith("/api/admin/")) return await adminApi(req, env, url);
       if (p.startsWith("/b/")) return await bannerClick(env, url);
       if (p === "/api/banners/view" && req.method === "POST") return await bannerViews(req, env);
