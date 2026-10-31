@@ -198,7 +198,7 @@ Cada nota sale lista para buscadores y para compartir: título, resumen y foto e
 - `/rss.xml`: las últimas 30 notas, para lectores de noticias y herramientas que publican en redes.
 - `/robots.txt`: le dice a Google que no entre al panel.
 
-**Para que Google empiece a leer la página (una sola vez):** entra a https://search.google.com/search-console, agrega `radiodeleon.com` y, en *Sitemaps*, escribe `sitemap.xml` y dale *Enviar*.
+**Google Search Console:** ya está dado de alta (`radiodeleon.com` como dominio) y el `sitemap.xml` se envió el 30 de octubre de 2026 (estado *Correcto*). Para que Google lea pronto una nota importante, pega su enlace en *Inspeccionar las URL* y dale *Solicitar indexación*.
 
 ## Kit para anunciantes
 
