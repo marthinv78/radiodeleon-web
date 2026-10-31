@@ -164,6 +164,8 @@ Las notas que el agente publique solo (con `EDITOR_AUTOPUBLISH`) **no** se manda
 
 ## Alexa: "Alexa, abre Radio de León"
 
+> **Versión que se usa: la alojada por Amazon** (`alexa/alojada/index.js`). Amazon no lograba conectarse a `radiodeleon.com/alexa` (la petición nunca llegaba a Cloudflare, probablemente por el certificado), así que la skill corre en los servidores de Amazon (*Alexa-hosted, Node.js*). El código se pega en la pestaña **Code** de la consola, en `lambda/index.js`, y se publica con **Deploy**. La versión en Cloudflare (`src/alexa.js`) queda como respaldo.
+
 La radio tiene su propia skill de Alexa, así que no depende de que TuneIn la encuentre. La parte que responde a Alexa ya vive en esta página (`src/alexa.js`, en `radiodeleon.com/alexa`): revisa que cada petición venga de Amazon y pone la señal en vivo.
 
 Lo que la gente puede decir:
