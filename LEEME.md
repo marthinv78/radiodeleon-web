@@ -186,6 +186,10 @@ Lo que la gente puede decir:
 
 Si cambia la dirección de la señal, cámbiala arriba de `src/alexa.js` (y en `public/index.html`) y vuelve a publicar.
 
+**Estado:** la skill alojada por Amazon (ID `amzn1.ask.skill.fd9b7a25-480b-4786-8b9b-df0336280be7`, español de México, España y EE. UU.) pasó la validación y se mandó a certificación el 31 de octubre de 2026. Los textos de la ficha están en `alexa/skill.json`.
+
+**Pendiente cuando la aprueben:** agregar en *Build → Skill Launch Phrases* frases sin nombre como "pon radio de león" y "quiero escuchar radio de león", para que Alexa abra la skill sin decir "skill" y no ponga otra emisora con nombre parecido.
+
 ## Google y redes sociales
 
 Cada nota sale lista para buscadores y para compartir: título, resumen y foto en la vista previa de WhatsApp, Facebook y X; el texto ya escrito en la página; y los datos de artículo que lee Google (fecha, sección, foto y quién publica).
