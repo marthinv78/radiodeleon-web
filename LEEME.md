@@ -188,7 +188,7 @@ Si cambia la dirección de la señal, cámbiala arriba de `src/alexa.js` (y en `
 
 **Estado:** la skill alojada por Amazon (ID `amzn1.ask.skill.fd9b7a25-480b-4786-8b9b-df0336280be7`, español de México, España y EE. UU.) fue **aprobada y publicada** por Amazon el 2 de noviembre de 2026: cualquier persona con Alexa en español puede decir "Alexa, abre radio de león". Los textos de la ficha están en `alexa/skill.json`.
 
-**Pendiente cuando la aprueben:** agregar en *Build → Skill Launch Phrases* frases sin nombre como "pon radio de león" y "quiero escuchar radio de león", para que Alexa abra la skill sin decir "skill" y no ponga otra emisora con nombre parecido.
+**Frases sin nombre:** Amazon no ofrece *Skill Launch Phrases* en español (solo en inglés), y el nombre de invocación ya no se puede cambiar porque la skill está publicada. Si al decir "Alexa, abre radio de león" pone otra emisora, la forma segura es "Alexa, abre la skill radio de león". En casa se puede crear una rutina en la app de Alexa (frase "pon radio de león" → abrir la skill).
 
 ## Google y redes sociales
 
