@@ -13,6 +13,19 @@ Todo corre en Cloudflare con el plan gratuito:
 
 La música no pasa por aquí: el reproductor toma la señal de `radio.nanostudio.com.mx` (AzuraCast en tu Proxmox).
 
+## Estado y pendientes (2 de noviembre de 2026)
+
+**Funcionando:** portal y reproductor 24 horas · panel `/admin` · agente editorial diario · publicación automática en Facebook e Instagram · banners y página `/anunciate` · Google Search Console con `sitemap.xml` · TuneIn · skill de Alexa **publicada** · correo `hola@radiodeleon.com` (reenvía a Gmail) · cortinillas y promo programadas en AzuraCast (`audio/`).
+
+**Pendiente:**
+1. **Licencias de música (SACM y SOMEXFON):** enviar los correos que están en Borradores de Gmail. Plan y textos en `licencias/LEEME.md`. No vender publicidad hasta tenerlas.
+2. **Música en AzuraCast:** solo la lista *Navideña* (299 canciones) tiene música y está en rotación general; la lista *default* está vacía. Subir la música normal y desactivar *Navideña* hasta diciembre.
+3. Cambiar la **contraseña del panel** (`npx wrangler secret put ADMIN_PASSWORD`).
+4. Volver a prender **Comprobación de integridad del navegador** en Cloudflare (Seguridad → Configuración); se apagó al probar Alexa y ya no hace falta.
+5. Poner `radiodeleon.com` como sitio web en la **página de Facebook**.
+6. **Alexa:** borrar la skill vieja (*Provision your own*) en la consola y crear la rutina en casa ("pon radio de león").
+7. Lanzar en redes la **convocatoria a bandas del Bajío** y el anuncio de **Alexa** (`kit-redes/prompts-y-textos.md`).
+
 ---
 
 ## Publicarla por primera vez (una sola vez, unos 15 minutos)
@@ -241,6 +254,11 @@ public/admin.html   panel de administración
 public/og.jpg       imagen al compartir la página
 src/worker.js       servidor: API, sesión del panel, fotos y vista previa para WhatsApp
 editorial/          guía editorial, plantilla de nota y script con que el agente sube borradores
+alexa/              skill de Alexa: modelo de voz, ficha y código alojado por Amazon (alojada/index.js)
+audio/              cortinillas listas para el aire, fondo musical propio y script para producir nuevas
+kit-redes/          foto de perfil, portada, prompts para Claude Design y textos para redes
+kit-anunciantes/    hoja en PDF para anunciantes y su código QR
+licencias/          situación de las licencias de música, música libre y correos a SACM y SOMEXFON
 schema.sql          estructura de la base de datos y notas iniciales
 wrangler.toml       configuración de Cloudflare
 ```

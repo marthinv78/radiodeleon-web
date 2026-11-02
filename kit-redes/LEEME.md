@@ -65,3 +65,7 @@ Agrega uno de la sección (por ejemplo `#Cine`, `#Psicología`). El botón **Cop
 - **Cada nota nueva**: imagen de Instagram en el feed y la historia con el sticker de enlace.
 - **Al empezar cada programa**: la historia del programa ("Al aire").
 - **Eventos**: publícalos una semana antes y vuelve a subir la historia el día del evento.
+
+## Prompts para Claude Design
+
+Los prompts de la convocatoria a bandas del Bajío y del anuncio de Alexa, con sus textos para publicar y la respuesta de WhatsApp para pedir permiso a los músicos, están en `prompts-y-textos.md`.
